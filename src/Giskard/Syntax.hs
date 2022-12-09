@@ -1,4 +1,6 @@
 
+{-# LANGUAGE DeriveGeneric #-}
+
 -----------------------------------------------------------
 -- |
 -- Module       : Giskard.Syntax
@@ -16,6 +18,7 @@ import              Data.IntMap (IntMap)
 import              Data.HashMap.Strict (HashMap)
 import qualified    Data.List as List
 import              Data.Text (Text)
+import              GHC.Generics (Generic)
 
 
 -- |
@@ -25,18 +28,18 @@ import              Data.Text (Text)
 data Judgement aterm atype
 
     -- | Claims the formation of a new type.
-    = JudgeTypeFormation atype
+    = JTypeFormation atype
 
     -- | Claims that two types are definitionally equal.
-    | JudgeTypeEquality atype atype
+    | JTypeEquality atype atype
 
     -- | Claims the typing of a term.
-    | JudgeType aterm atype
+    | JTyping aterm atype
 
     -- | Claims that two terms are definitionally equal.
-    | JudgeEqual aterm aterm atype
-
-    deriving Show
+    | JEqual aterm aterm atype
+    
+    deriving (Show, Generic)
 
 -- |
 -- A deduction is a relationship of lists of claims. If we assume the
