@@ -46,7 +46,8 @@ data Judgement aterm atype
 -- claims listed in the hypotheses, then we can deduce the claims listed
 -- as conclusions.
 --
-data Deduction aterm atype = Deduction
+data Deduction aterm atype
+    = Deduction
     { hypotheses  :: [Judgement aterm atype]
     , conclusions :: [Judgement aterm atype]
     }
@@ -76,8 +77,10 @@ data Term' name
 -- Information about what and how exactly we're binding some term.
 --
 data Binder bindTy
-    = Lam bindTy        -- ^ Bind with @\(x : A) -> y : B@
-    | Pi  bindTy bindTy -- ^ Bind with @Pi (x : A) -> y : B x@
+    -- | Bind with @\(x : A) -> y : B@.
+    = Lam bindTy
+    -- | Bind with @Pi (x : A) -> y : B x@.
+    | Pi  bindTy bindTy
     | Let bindTy bindTy
     deriving Show
 
