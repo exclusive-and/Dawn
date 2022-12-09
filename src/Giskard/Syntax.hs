@@ -1,10 +1,10 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Dawn.Syntax
--- Description  : Abstract Syntax of the Dawn Language.
+-- Module       : Giskard.Syntax
+-- Description  : Abstract Syntax of the Giskard Language.
 -----------------------------------------------------------
-module Dawn.Syntax
+module Giskard.Syntax
     ( Judgement (..), Deduction (..)
     , Term' (..), Binder (..), Term, Type
     ) where
