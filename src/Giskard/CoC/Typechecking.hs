@@ -18,7 +18,7 @@ import Giskard.CoC.Term
 -- Trivial rule stating the existence of Star.
 --
 starRule :: Deduction
-starRule = Deduction [] (Concept emptyCtxt (JTypeFormation mkStar))
+starRule = Deduction [] (Concept emptyCtxt (JIsAType mkStar))
 
 -- |
 -- Deductive statement of the lambda-abstraction rule.

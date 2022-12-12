@@ -1,7 +1,4 @@
 
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -----------------------------------------------------------
 -- |
 -- Module       : Giskard.CoC.Ppr
@@ -55,8 +52,8 @@ pprContext = \case
 
 pprJudgement :: Judgement -> Text
 pprJudgement = \case
-    JTypeFormation ty
-        -> "|- " <> pprTerm ty <> " Type"
+    JIsAType ty -> "|- " <> pprTerm ty <> " Type"
+    
     JTypeEquality ty1 ty2
         -> "|- " <> pprTerm ty1 <> " = " <> pprTerm ty2
     JTyping tm ty
