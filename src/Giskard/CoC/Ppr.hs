@@ -65,8 +65,8 @@ pprJudgement = \case
         -> "|- " <> pprTerm tm1 <> " = " <> pprTerm tm2 <> " : " <> pprTerm ty
 
 
-pprConcept :: Concept -> Text
-pprConcept (Concept ctxt j) =
+pprSequent :: Sequent -> Text
+pprSequent (Sequent ctxt j) =
     pprContext ctxt <> " " <> pprJudgement j
 
 

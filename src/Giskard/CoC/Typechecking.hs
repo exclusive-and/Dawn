@@ -18,7 +18,7 @@ import Giskard.CoC.Term
 -- Trivial rule stating the existence of Star.
 --
 starRule :: Deduction
-starRule = Deduction [] (Concept emptyCtxt (JTypeFormation mkStar))
+starRule = Deduction [] (Sequent emptyCtxt (JTypeFormation mkStar))
 
 -- |
 -- Deductive statement of the lambda-abstraction rule.
@@ -35,7 +35,7 @@ abstractionRule =
     ctxt1 = NamedContext "C"
     concl = JTyping (mkLam xbndr a e) (mkPi xbndr a b)
   in
-    Deduction [Concept ctxt0 hyp] (Concept ctxt1 concl)
+    Deduction [Sequent ctxt0 hyp] (Sequent ctxt1 concl)
 
 -- |
 -- Quick version of the abstraction rule that doesn't require unification
@@ -55,4 +55,4 @@ quickAbstraction ctxt bndr dom term ty =
     hyp   = JTyping term ty
     concl = JTyping (mkLam bndr dom term) (mkPi bndr dom ty)
   in
-    Deduction [Concept ctxt0 hyp] (Concept ctxt concl)
+    Deduction [Sequent ctxt0 hyp] (Sequent ctxt concl)

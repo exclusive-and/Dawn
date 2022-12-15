@@ -8,7 +8,7 @@
 -----------------------------------------------------------
 module Giskard.CoC.Deduction
     ( Judgement' (..), Judgement
-    , Concept' (..), Concept
+    , Sequent' (..), Sequent
     , context, judgement
     , Deduction' (..), Deduction
     , hypotheses, conclusion
@@ -23,16 +23,12 @@ import              Giskard.CoC.Term
 -- that we can deduce within our logical framework.
 --
 data Judgement' aterm atype
-
     -- | Claims something is a type: @|- A is a Type@.
     = JIsAType atype
-
     -- | Claims that two types are definitionally equal: @|- A === B@.
     | JTypeEquality atype atype
-
     -- | Claims the typing of a term: @|- x : A@.
     | JTyping aterm atype
-
     -- |
     -- Claims that two terms both of a given type are definitionally
     -- equal: @|- x === y : A@.
@@ -44,32 +40,17 @@ type Judgement = Judgement' Term Type
 
 
 -- |
--- If a context @C@ assumes all the constants found in a judgement @J@,
--- then @C@ gives rise to the concept @J@, written @C |- J@.
+-- A sequent with antecedent @C@ and judgement @J@ claims that @J@ is
+-- typechecked with respect to constants in @C@.
 --
-data Concept' ctxt aterm atype
-    = Concept ctxt (Judgement' aterm atype)
+data Sequent' ctxt aterm atype
+    = Sequent
+    { antecedent    :: ctxt
+    , judgement     :: Judgement' aterm atype
+    }
     deriving Show
 
--- NOTE:
--- Whether a judgement should or shouldn't include context seems
--- ambiguous. For now we separate judgement and concept so working
--- with plain judgements is easier.
-
--- |
--- Get the context of a concept.
---
-context :: Concept' ctxt aterm atype -> ctxt
-context (Concept ctxt _) = ctxt
-
--- |
--- Get the judgement of a concept.
---
-judgement :: Concept' ctxt aterm atype -> Judgement' aterm atype
-judgement (Concept _ j) = j
-
-
-type Concept = Concept' Context Term Type
+type Sequent = Sequent' Context Term Type
 
 
 -- |
@@ -77,26 +58,10 @@ type Concept = Concept' Context Term Type
 --
 data Deduction' ctxt aterm atype
     = Deduction
-        [Concept' ctxt aterm atype]
-        (Concept' ctxt aterm atype)
+    { hypotheses :: [Sequent' ctxt aterm atype]
+    , conclusion :: Sequent' ctxt aterm atype
+    }
     deriving Show
-
--- |
--- The premises of a deduction step.
-hypotheses
-    :: Deduction' ctxt aterm atype
-    -> [Concept' ctxt aterm atype]
-
-hypotheses (Deduction hyps _) = hyps
-
--- |
--- The conclusion of a deduction step.
---
-conclusion
-    :: Deduction' ctxt aterm atype
-    -> Concept' ctxt aterm atype
-
-conclusion (Deduction _ concl) = concl
 
 type Deduction = Deduction' Context Term Type
 
