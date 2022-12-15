@@ -1,6 +1,4 @@
 
-{-# LANGUAGE DeriveGeneric #-}
-
 -----------------------------------------------------------
 -- |
 -- Module       : Giskard.CoC.Deduction

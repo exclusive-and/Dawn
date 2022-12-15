@@ -1,0 +1,76 @@
+Cabal-version:        2.2
+Name:                 Giskard
+Version:              0.0.0
+Synopsis:             Giskard Automated Reasoning System
+License:              BSD-2-Clause
+License-file:         LICENSE
+Author:               Simon Lovell Bart
+Maintainer:           Simon Lovell Bart
+Category:             Hardware
+Build-type:           Simple
+
+common common-options
+  default-language:   Haskell2010
+  default-extensions: BangPatterns
+                      BinaryLiterals
+                      DataKinds
+                      DefaultSignatures
+                      DeriveDataTypeable
+                      DeriveFoldable
+                      DeriveFunctor
+                      DeriveGeneric
+                      DeriveLift
+                      DeriveTraversable
+                      DerivingStrategies
+                      FlexibleContexts
+                      FlexibleInstances
+                      InstanceSigs
+                      KindSignatures
+                      LambdaCase
+                      NoStarIsType
+                      OverloadedStrings
+                      ScopedTypeVariables
+                      StandaloneDeriving
+                      TupleSections
+                      TypeApplications
+                      TypeOperators
+                      ViewPatterns
+
+Library
+  import:             common-options
+  HS-Source-Dirs:     src
+
+  ghc-options:        -Wall -Wcompat
+  CPP-Options:        -DCABAL
+
+  other-extensions:   CPP
+                      DeriveAnyClass
+                      GeneralizedNewtypeDeriving
+                      MultiParamTypeClasses
+                      RankNTypes
+                      RecordWildCards
+                      TemplateHaskell
+
+  Build-depends:      base                    >= 4.11     && < 5,
+                      containers              >= 0.5.0.0  && < 0.7,
+                      deepseq                 >= 1.3.0.2  && < 1.5,
+                      exceptions              >= 0.8.3    && < 0.11.0,
+                      hashable                >= 1.2.1.0  && < 1.5,
+                      haskell-src-meta        >= 0.8      && < 0.9,
+                      string-interpolate      ^>= 0.3,
+                      lens                    >= 4.10     && < 5.2.0,
+                      mtl                     >= 2.1.2    && < 2.3,
+                      ordered-containers      >= 0.2      && < 0.3,
+                      prettyprinter           >= 1.2.0.1  && < 1.8,
+                      pretty-show             >= 1.9      && < 2.0,
+                      primitive               >= 0.5.0.1  && < 1.0,
+                      template-haskell        >= 2.8.0.0  && < 2.18,
+                      text                    >= 1.2.2    && < 2.1,
+                      transformers            >= 0.5.2.0  && < 0.7,
+                      unordered-containers    >= 0.2.3.3  && < 0.3
+
+  Exposed-modules:    Giskard.CoC.Contexts
+                      Giskard.CoC.Deduction
+                      Giskard.CoC.Ppr
+                      Giskard.CoC.Term
+                      Giskard.CoC.Typechecking
