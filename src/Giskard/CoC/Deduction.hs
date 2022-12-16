@@ -21,16 +21,31 @@ import              Giskard.CoC.Term
 -- that we can deduce within our logical framework.
 --
 data Judgement' aterm atype
+
     -- | Claims something is a type: @|- A is a Type@.
-    = JIsAType atype
-    -- | Claims that two types are definitionally equal: @|- A === B@.
-    | JTypeEquality atype atype
+    = JIsAType
+        atype       -- ^ @A@
+
+    -- |
+    -- Claims that two types are definitionally equal: @|- A === B@.
+    -- This is the only way that we permit an interchange of types: a
+    -- term may only have one type up to this equality.
+    | JTypesAreEqual
+        atype       -- ^ @A@
+        atype       -- ^ @B@
+
     -- | Claims the typing of a term: @|- x : A@.
-    | JTyping aterm atype
+    | JTyping
+        aterm       -- ^ @x@
+        atype       -- ^ @A@
+
     -- |
     -- Claims that two terms both of a given type are definitionally
     -- equal: @|- x === y : A@.
-    | JEquality aterm aterm atype
+    | JAreEqual
+        aterm       -- ^ @x@
+        aterm       -- ^ @y@
+        atype       -- ^ @A@
     
     deriving Show
 
