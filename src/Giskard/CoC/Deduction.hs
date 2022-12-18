@@ -52,8 +52,7 @@ data Judgement
 -- A sequent with antecedent @C@ and judgement @J@ claims that @J@ is
 -- typechecked with respect to constants in @C@.
 --
-data Sequent
-    = Sequent
+data Sequent = Sequent
     { antecedent    :: Context
     , judgement     :: Judgement
     }
@@ -61,10 +60,14 @@ data Sequent
 
 
 -- |
+-- Giskard can reason about the things it knows through deductions.
+-- The deductive step claims that if we can match some hypotheses,
+-- then we can deduce a new idea as a conclusion.
+-- 
+-- These deductions can be simple typechecking rules, but also more
+-- complex theorems that Giskard might be made aware of.
 --
---
-data Deduction
-    = Deduction
+data Deduction = Deduction
     { hypotheses :: [Sequent]
     , conclusion :: Sequent
     }
