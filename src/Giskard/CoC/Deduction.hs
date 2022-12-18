@@ -2,79 +2,71 @@
 -----------------------------------------------------------
 -- |
 -- Module       : Giskard.CoC.Deduction
--- Description  : Judgement and Deduction for the Calculus of Constructions
+-- Description  : Knowledge Representation and Reasoning in Giskard
 -----------------------------------------------------------
 module Giskard.CoC.Deduction
-    ( Judgement' (..), Judgement
-    , Sequent' (..), Sequent
+    ( Judgement (..), Sequent (..)
     , context, judgement
-    , Deduction' (..), Deduction
+    , Deduction (..)
     , hypotheses, conclusion
     ) where
 
-import              Giskard.CoC.Contexts
-import              Giskard.CoC.Term
+import Giskard.CoC.Contexts
+import Giskard.CoC.Term
 
 
 -- |
--- A judgement @|- J@, on the right side of a turnstile, is a claim
--- that we can deduce within our logical framework.
+-- Judgements are the most basic things that Giskard can know about.
 --
-data Judgement' aterm atype
+data Judgement
 
     -- | Claims something is a type: @|- A is a Type@.
     = JIsAType
-        atype       -- ^ @A@
+        Type         -- ^ @A@
 
     -- |
     -- Claims that two types are definitionally equal: @|- A === B@.
     -- This is the only way that we permit an interchange of types: a
-    -- term may only have one type up to this equality.
+    -- term may only have one type modulo this equality.
     | JTypesAreEqual
-        atype       -- ^ @A@
-        atype       -- ^ @B@
+        Type         -- ^ @A@
+        Type         -- ^ @B@
 
     -- | Claims the typing of a term: @|- x : A@.
-    | JTyping
-        aterm       -- ^ @x@
-        atype       -- ^ @A@
+    | JOfType
+        Term         -- ^ @x@
+        Type         -- ^ @A@
 
     -- |
     -- Claims that two terms both of a given type are definitionally
     -- equal: @|- x === y : A@.
     | JAreEqual
-        aterm       -- ^ @x@
-        aterm       -- ^ @y@
-        atype       -- ^ @A@
+        Term         -- ^ @x@
+        Term         -- ^ @y@
+        Type         -- ^ @A@
     
     deriving Show
-
-type Judgement = Judgement' Term Type
 
 
 -- |
 -- A sequent with antecedent @C@ and judgement @J@ claims that @J@ is
 -- typechecked with respect to constants in @C@.
 --
-data Sequent' ctxt aterm atype
+data Sequent
     = Sequent
-    { antecedent    :: ctxt
-    , judgement     :: Judgement' aterm atype
+    { antecedent    :: Context
+    , judgement     :: Judgement
     }
     deriving Show
-
-type Sequent = Sequent' Context Term Type
 
 
 -- |
 --
 --
-data Deduction' ctxt aterm atype
+data Deduction
     = Deduction
-    { hypotheses :: [Sequent' ctxt aterm atype]
-    , conclusion :: Sequent' ctxt aterm atype
+    { hypotheses :: [Sequent]
+    , conclusion :: Sequent
     }
     deriving Show
-
-type Deduction = Deduction' Context Term Type
 
