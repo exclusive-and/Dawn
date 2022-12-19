@@ -6,37 +6,45 @@
 -----------------------------------------------------------
 module Giskard.CoC.Ppr where
 
-import              Giskard.CoC.Contexts
-import              Giskard.CoC.Deduction
 import              Giskard.CoC.Term
-import              Giskard.CoC.Typechecking
 
-import              Data.Text (Text)
+import              Data.Text (Text, pack)
 import qualified    Data.Text as Text
 
 
-pprTerm :: Term -> Text
-pprTerm (T tm) = case tm of
-    Star     -> "*"
-    Var name -> name
+class Ppr a where
+    ppr :: Int -> a -> Text
 
-    Pi bndr dom cod
-        -> "(" <> bndr <> " : " <> pprTerm dom <> ")"
-        <> " -> " <> pprTerm cod
+pprTerm :: Ppr a => Int -> Term' a -> Text
+pprTerm lvl tm = case tm of
+    Star    -> "*"
+    Point p -> ppr (lvl - 1) p
 
-    Lam bndr dom e
-        -> "\\ (" <> bndr <> " : " <> pprTerm dom <> ")"
-        <> " -> " <> pprTerm e
+    Pi dom cod
+        -> "Pi" <> " ( " <> pack (show lvl) <> " : " <> ppr lvl dom <> " )" <> " -> " <> ppr lvl cod
 
-    Let bndr ty e body
-        -> "let " <> bndr <> " : " <> pprTerm ty
-        <> " := " <> pprTerm e
-        <> " in " <> pprTerm body
+    Lam dom e
+        -> "Lam" <> " ( " <> pack (show lvl) <> " : " <> ppr lvl dom <> " )" <> " -> " <> ppr lvl e
 
-    App f x
-        -> "(" <> pprTerm f <> ") (" <> pprTerm x <> ")"
+    Let ty e body
+        -> "let " <> "()" <> " : " <> ppr lvl ty
+        <> " := " <> ppr lvl e
+        <> " in " <> ppr lvl body
 
+    App f xs
+        -> "(" <> ppr lvl f <> ")" <> Text.concat (map (\x -> " (" <> ppr lvl x <> ")") xs)
 
+instance Ppr a => Ppr (Term' a) where ppr = pprTerm
+
+instance Ppr a => Ppr (Abs () Term' a) where ppr lvl = ppr (lvl + 1) . unAbs
+  
+instance Ppr a => Ppr (Point () a) where
+    ppr lvl (Bound _)   = pack $ show lvl
+    ppr lvl (Subterm a) = ppr lvl a
+
+instance Ppr Text where ppr _ a = a
+    
+{-
 pprContext :: Context -> Text
 pprContext = \case
     NamedContext ctxtName -> ctxtName
@@ -48,7 +56,6 @@ pprContext = \case
 
     ConcatContexts ctxt1 ctxt2
         -> pprContext ctxt1 <> " ; " <> pprContext ctxt2
-
 
 pprJudgement :: Judgement -> Text
 pprJudgement = \case
@@ -75,3 +82,5 @@ pprDeduction (Deduction hyps concl) =
     concl' = pprConcept concl
   in
     Text.concat $ hyps' ++ [sep] ++ [concl']
+    -}
+    
