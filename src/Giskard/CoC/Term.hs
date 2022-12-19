@@ -26,10 +26,11 @@ import GHC.Generics (Generic)
 -----------------------------------------------------------
 
 -- |
--- Terms are free monads, extended to support abstractions over
+-- Terms are free monads; extended to support abstractions over
 -- typed terms, abstractions of types (pi-types), and let-binders.
 -- 
--- See [the bound package](https://hackage.haskell.org/package/bound)
+-- See the
+-- [bound package](https://hackage.haskell.org/package/bound)
 -- for the original implementation of this idea.
 -- 
 data Term' a
