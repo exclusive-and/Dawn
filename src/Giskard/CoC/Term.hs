@@ -107,8 +107,8 @@ abstract test tm = Abs $ do
         Nothing -> Subterm (pure a)
 
 -- |
--- Instantiate a bound constant in an abstraction to eliminate the
--- abstraction.
+-- Eliminate an abstraction by instantiating the bound variable with
+-- a subterm.
 --
 instantiate :: Monad f => (b -> f a) -> Abs b f a -> f a
 instantiate inst (Abs m) = do
