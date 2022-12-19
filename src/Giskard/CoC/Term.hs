@@ -12,6 +12,8 @@ module Giskard.CoC.Term
     , bindAbsSubterms
     , Point (..)
     , Term, Type, Name
+    , abstract1, mkPi, mkLam
+    , SynEq (..)
     ) where
 
 import Control.Monad (ap, liftM)
@@ -32,9 +34,9 @@ import GHC.Generics (Generic)
 -- 
 data Term' a
     -- |
-    -- A thing that we think is a constant in this context. Might be
-    -- an identifier or binder, but can also be a subterm during
-    -- substitution.
+    -- A thing that we think is atomic in this term. Might be
+    -- a variable or binder, but can also be a subterm during
+    -- substitutions.
     = Point a
     
     -- | A pi-type abstracts over a term in a type.
@@ -52,7 +54,7 @@ data Term' a
 type Type' = Term'
 
 -- |
--- Recurse over a term to apply a function which substitutes constants
+-- Recurse over a term to apply a function which substitutes points
 -- for new subterms.
 -- 
 bindTerm :: Term' a -> (a -> Term' c) -> Term' c
@@ -76,9 +78,9 @@ instance Applicative Term' where
 -----------------------------------------------------------
     
 -- |
--- An abstraction is a term whose constants are either bound by the
--- abstraction, or are subterms from the external context. Analogous
--- to the abstraction typing rule:
+-- An abstraction binds a variable in a term, so that all points in
+-- the term are either binders, or subterms with no bound points.
+-- It is analogous to the abstraction typing rule:
 --
 -- @
 --    C, x : A |- e : B
@@ -86,8 +88,7 @@ instance Applicative Term' where
 --   C |- \ (x : A) -> e
 -- @
 -- 
--- Notice that constants in @e@ are either @x@, or variables with
--- type information in @C@.
+-- Where all points in @e@ are either @x@, or variables in @C@.
 -- 
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
     deriving Generic
@@ -96,8 +97,9 @@ instance Functor f => Functor (Abs b f) where
     fmap f (Abs m) = Abs $ fmap (fmap (fmap f)) m
 
 -- |
--- Abstract a term using the type rule in 'Abs'. Replaces a subterm
--- in context that satisfies the given predicate with a bound constant.
+-- Abstract a term using the type rule in 'Abs'. Applies a test function
+-- to each point, and replaces the point with the appropriate binder when
+-- applicable.
 -- 
 abstract :: Monad f => (a -> Maybe b) -> f a -> Abs b f a
 abstract test tm = Abs $ do
@@ -107,8 +109,7 @@ abstract test tm = Abs $ do
         Nothing -> Subterm (pure a)
 
 -- |
--- Eliminate an abstraction by instantiating the bound variable with
--- a subterm.
+-- Eliminate an abstraction by replacing bound variables with subterms.
 --
 instantiate :: Monad f => (b -> f a) -> Abs b f a -> f a
 instantiate inst (Abs m) = do
@@ -125,8 +126,10 @@ class AbsLike t where
     (>>>=) :: Monad f => t f a -> (a -> f c) -> t f c
 
 -- |
--- For subterms not bound by the abstraction, recursively apply a
--- substitution using 'bindTerm'. For bound subterms, do nothing.
+-- For points not bound by the abstraction, recursively apply a
+-- substitution to their subterms using 'bindTerm'.
+-- 
+-- For bound points, do nothing.
 -- 
 bindAbsSubterms :: Monad f => Abs b f a -> (a -> f c) -> Abs b f c
 bindAbsSubterms (Abs m) s = Abs $ liftM (fmap (>>= s)) m
@@ -139,7 +142,7 @@ instance AbsLike (Abs b) where (>>>=) = bindAbsSubterms
 -----------------------------------------------------------
     
 -- |
--- A thing that is either a binder or a subterm in the outer context.
+-- A thing that is either a binder or a subterm.
 -- 
 data Point b a
     = Bound     b
@@ -159,6 +162,24 @@ type Term = Term' Name
 type Type = Term
 -- TEMPORARY
 type Name = Text
+
+-- |
+-- Abstract a term over a single point (using 'Eq', not 'SynEq').
+-- 
+abstract1 :: (Monad f, Eq a) => a -> f a -> Abs () f a
+abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
+
+-- |
+-- Make a pi-type from a type by abstracting over a name.
+-- 
+mkPi :: Name -> Type -> Type -> Type
+mkPi nm dom cod = Pi dom $ abstract1 nm cod
+
+-- |
+-- Make a lambda-term from a term by abstracting over a name.
+-- 
+mkLam :: Name -> Type -> Term -> Term
+mkLam nm dom tm = Lam dom $ abstract1 nm tm
 
 
 -----------------------------------------------------------
