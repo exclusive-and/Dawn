@@ -26,11 +26,10 @@ import GHC.Generics (Generic)
 -----------------------------------------------------------
 
 -- |
--- Terms are free monads; extended to support abstractions over
--- typed terms, abstractions of types (pi-types), and let-binders.
+-- Terms are free monads; extended to support abstraction over typed
+-- variables, abstractions of types (pi-types), and let-binders.
 -- 
--- See the
--- [bound package](https://hackage.haskell.org/package/bound)
+-- See [the bound package](https://hackage.haskell.org/package/bound)
 -- for the original implementation of this idea.
 -- 
 data Term' a
@@ -55,8 +54,8 @@ data Term' a
 type Type' = Term'
 
 -- |
--- Recurse over a term to apply a function which substitutes points
--- for new subterms.
+-- Recurse over a term to apply a function which substitutes points for
+-- new subterms.
 -- 
 bindTerm :: Term' a -> (a -> Term' c) -> Term' c
 bindTerm t s = case t of
@@ -80,8 +79,8 @@ instance Applicative Term' where
     
 -- |
 -- An abstraction binds a variable in a term, so that all points in
--- the term are either binders, or subterms with no bound points.
--- It is analogous to the abstraction typing rule:
+-- the term are either binders, or subterms with no bound points. It is
+-- analogous to the abstraction typing rule:
 --
 -- @
 --    C, x : A |- e : B
