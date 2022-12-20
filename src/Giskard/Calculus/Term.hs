@@ -14,10 +14,16 @@ module Giskard.Calculus.Term
     , Term, Type, Name
     , abstract1, mkPi, mkLam
     , SynEq (..)
+    , synEqTerms
+    , synEqAbs, synEqPoints
+    , Subst
+    , applySubst
     ) where
 
-import Control.Monad (ap, liftM)
-import Data.Text (Text)
+import              Control.Monad (ap, liftM)
+import              Data.Map (Map)
+import qualified    Data.Map as Map
+import              Data.Text (Text)
 
 
 -----------------------------------------------------------
@@ -225,8 +231,12 @@ instance SynEq a => SynEq [a] where
 -- Abstractions have trivial syntactic equality by the syntactic
 -- equality of their underlying terms.
 -- 
-synEqAbs :: (SynEq b, SynEq a) => Abs b f a -> Abs b f a -> Bool
-synEqAbs (Abs m1) (Abs m2) = synEqTerm m1 m2
+synEqAbs
+    :: (SynEq b, SynEq a)
+    => Abs b Term' a
+    -> Abs b Term' a
+    -> Bool
+synEqAbs (Abs m1) (Abs m2) = synEqTerms m1 m2
         
 instance (SynEq b, SynEq a) => SynEq (Abs b Term' a) where
     synEq = synEqAbs
@@ -244,4 +254,22 @@ synEqPoints p1 p2 = case (p1, p2) of
 instance (SynEq b, SynEq a) => SynEq (Point b a) where
     synEq = synEqPoints
 
+
+-----------------------------------------------------------
+-- Simple Pattern Unification of Terms
+-----------------------------------------------------------
+
+type Subst a = Map a (Term' a)
+
+-- |
+-- Apply a substitution map to a term. Works by looking up each of the
+-- term's points in the substitution map. If the point is a key in the
+-- map, replace it with the corresponding subterm. Otherwise, do nothing.
+-- 
+applySubst :: Ord a => Term' a -> Subst a -> Term' a
+applySubst tm subst = do
+    a <- tm
+    case Map.lookup a subst of
+        Just b  -> b
+        Nothing -> pure a
 
