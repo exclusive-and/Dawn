@@ -90,9 +90,6 @@ instance Applicative Term' where
 -- Where all points in @e@ are either @x@, or variables in @C@.
 -- 
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
-    
-instance Functor f => Functor (Abs b f) where
-    fmap f (Abs m) = Abs $ fmap (fmap (fmap f)) m
 
 -- |
 -- Abstract a term using the type rule in 'Abs'. Applies a test function
@@ -115,6 +112,9 @@ instantiate inst (Abs m) =
     m >>= \case
         Bound   b -> inst b
         Subterm a -> a
+
+instance Functor f => Functor (Abs b f) where
+    fmap f (Abs m) = Abs $ fmap (fmap (fmap f)) m
 
 -- |
 -- A thing that's like an abstraction with a strategy for free variable
