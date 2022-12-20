@@ -18,7 +18,7 @@ import Giskard.CoC.Term
 -- Trivial rule stating the existence of Star.
 --
 starRule :: Deduction
-starRule = Deduction [] (Sequent emptyCtxt (JTypeFormation mkStar))
+starRule = Deduction [] (Sequent emptyCtxt (JIsAType Star))
 
 -- |
 -- Deductive statement of the lambda-abstraction rule.
@@ -27,13 +27,13 @@ abstractionRule :: Deduction
 abstractionRule =
   let
     bndrs@[abndr, bbndr, ebndr, xbndr] = ["A", "B", "e", "x"]
-    [a, b, e, x] = map mkVar bndrs
+    [a, b, e, x] = map Point bndrs
 
     ctxt0 = ConcatContexts (NamedContext "C") (ContextList [Assume xbndr a])
-    hyp   = JTyping e b
+    hyp   = JOfType e b
 
     ctxt1 = NamedContext "C"
-    concl = JTyping (mkLam xbndr a e) (mkPi xbndr a b)
+    concl = JOfType (mkLam xbndr a e) (mkPi xbndr a b)
   in
     Deduction [Sequent ctxt0 hyp] (Sequent ctxt1 concl)
 
@@ -52,7 +52,7 @@ quickAbstraction ctxt bndr dom term ty =
   let
     ctxt0 = ConcatContexts ctxt (ContextList [Assume bndr dom])
 
-    hyp   = JTyping term ty
-    concl = JTyping (mkLam bndr dom term) (mkPi bndr dom ty)
+    hyp   = JOfType term ty
+    concl = JOfType (mkLam bndr dom term) (mkPi bndr dom ty)
   in
     Deduction [Sequent ctxt0 hyp] (Sequent ctxt concl)

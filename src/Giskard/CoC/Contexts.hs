@@ -27,12 +27,10 @@ data Context
     | ConcatContexts
         Context
         Context
-    deriving Show
 
 data Declaration
     = Assume Name Type
     | Define Name Term Type
-    deriving Show
 
 -- |
 -- Initial empty context.
@@ -44,15 +42,15 @@ emptyCtxt = ContextList []
 -- Convert a context list to a telescope term.
 --
 ctxtToTele :: Context -> Term
-ctxtToTele = go mkStar where
+ctxtToTele = go Star where
     go tele = \case
         -- (C : *) -> *
-        NamedContext name -> Pi name Star tele
+        NamedContext name -> mkPi name Star tele
 
         ContextList xs
             -> foldr goDecl tele $ reverse xs where
-                goDecl (Assume name   ty) tele1 = Pi name ty tele1
-                goDecl (Define name _ ty) tele1 = Pi name ty tele1
+                goDecl (Assume name   ty) tele1 = mkPi name ty tele1
+                goDecl (Define name _ ty) tele1 = mkPi name ty tele1
 
         ConcatContexts ctxt1 ctxt2
             -> go (go tele ctxt2) ctxt1

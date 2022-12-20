@@ -6,81 +6,88 @@
 -----------------------------------------------------------
 module Giskard.CoC.Ppr where
 
+import              Giskard.CoC.Contexts
+import              Giskard.CoC.Deduction
 import              Giskard.CoC.Term
+import              Giskard.CoC.Typechecking
 
 import              Data.Text (Text, pack)
 import qualified    Data.Text as Text
 
 
 class Ppr a where
-    ppr :: Int -> a -> Text
+    ppr :: a -> Text
 
-pprTerm :: Ppr a => Int -> Term' a -> Text
+pprTerm :: Int -> Term -> Text
 pprTerm lvl tm = case tm of
     Star    -> "*"
-    Point p -> ppr (lvl - 1) p
+    Point p -> p
 
     Pi dom cod
-        -> "Pi" <> " ( " <> pack (show lvl) <> " : " <> ppr lvl dom <> " )" <> " -> " <> ppr lvl cod
+        -> "Pi ( " <> pack (show lvl) <> " : " <> pprTerm lvl dom <> " )"
+        <> " -> " <> pprAbs cod
 
     Lam dom e
-        -> "Lam" <> " ( " <> pack (show lvl) <> " : " <> ppr lvl dom <> " )" <> " -> " <> ppr lvl e
+        -> "Lam ( " <> pack (show lvl) <> " : " <> pprTerm lvl dom <> " )"
+        <> " -> " <> pprAbs e
 
     Let ty e body
-        -> "let " <> "()" <> " : " <> ppr lvl ty
-        <> " := " <> ppr lvl e
-        <> " in " <> ppr lvl body
+        -> "Let ( " <> pack (show lvl) <> " : " <> pprTerm lvl ty <> " )"
+        <> " := " <> pprTerm lvl e
+        <> " In " <> pprAbs body
 
     App f xs
-        -> "(" <> ppr lvl f <> ")" <> Text.concat (map (\x -> " (" <> ppr lvl x <> ")") xs)
+        -> "(" <> pprTerm lvl f <> ")"
+        <> Text.concat (map (\x -> " (" <> pprTerm lvl x <> ")") xs)
+  where
+    pprAbs e = pprTerm (lvl + 1) (inst e)
+    inst   e = instantiate (const $ pure $ pack $ show lvl) e
 
-instance Ppr a => Ppr (Term' a) where ppr = pprTerm
+instance Ppr Term where ppr = pprTerm 0
+        
 
-instance Ppr a => Ppr (Abs () Term' a) where ppr lvl = ppr (lvl + 1) . unAbs
-  
-instance Ppr a => Ppr (Point () a) where
-    ppr lvl (Bound _)   = pack $ show lvl
-    ppr lvl (Subterm a) = ppr lvl a
-
-instance Ppr Text where ppr _ a = a
-    
-{-
 pprContext :: Context -> Text
 pprContext = \case
     NamedContext ctxtName -> ctxtName
 
     ContextList xs -> Text.intercalate ", " $ map go xs where
-        go (Assume name   ty) = "(" <> name <> " : " <> pprTerm ty <> ")"
+        go (Assume name   ty) = "(" <> name <> " : " <> ppr ty <> ")"
         go (Define name e ty) =
-            "(" <> name <> " : " <> pprTerm ty <> " := " <> pprTerm e <> ")"
+            "(" <> name <> " : " <> ppr ty <> " := " <> ppr e <> ")"
 
     ConcatContexts ctxt1 ctxt2
         -> pprContext ctxt1 <> " ; " <> pprContext ctxt2
 
+instance Ppr Context where ppr = pprContext
+        
+        
 pprJudgement :: Judgement -> Text
 pprJudgement = \case
-    JIsAType ty -> "|- " <> pprTerm ty <> " Type"
+    JIsAType ty -> "|- " <> ppr ty <> " Type"
     
-    JTypeEquality ty1 ty2
-        -> "|- " <> pprTerm ty1 <> " = " <> pprTerm ty2
-    JTyping tm ty
-        -> "|- " <> pprTerm tm <> " : " <> pprTerm ty
-    JEquality tm1 tm2 ty
-        -> "|- " <> pprTerm tm1 <> " = " <> pprTerm tm2 <> " : " <> pprTerm ty
+    JTypesAreEqual ty1 ty2
+        -> "|- " <> ppr ty1 <> " = " <> ppr ty2
+    JOfType tm ty
+        -> "|- " <> ppr tm <> " : " <> ppr ty
+    JAreEqual tm1 tm2 ty
+        -> "|- " <> ppr tm1 <> " = " <> ppr tm2 <> " : " <> ppr ty
 
+instance Ppr Judgement where ppr = pprJudgement
 
 pprSequent :: Sequent -> Text
 pprSequent (Sequent ctxt j) =
     pprContext ctxt <> " " <> pprJudgement j
 
+instance Ppr Sequent where ppr = pprSequent
 
 pprDeduction :: Deduction -> Text
 pprDeduction (Deduction hyps concl) =
   let
-    hyps' = map ((<> "\n") . pprConcept) hyps
+    hyps' = map ((<> "\n") . pprSequent) hyps
     sep   = "------------------------------\n"
-    concl' = pprConcept concl
+    concl' = pprSequent concl
   in
     Text.concat $ hyps' ++ [sep] ++ [concl']
-    -}
+
+instance Ppr Deduction where ppr = pprDeduction
     

@@ -5,10 +5,7 @@
 -- Description  : Knowledge Representation and Reasoning in Giskard
 -----------------------------------------------------------
 module Giskard.CoC.Deduction
-    ( Judgement (..), Sequent (..)
-    , context, judgement
-    , Deduction (..)
-    , hypotheses, conclusion
+    ( Judgement (..), Sequent (..), Deduction (..)
     ) where
 
 import Giskard.CoC.Contexts
@@ -44,8 +41,6 @@ data Judgement
         Term         -- ^ @x@
         Term         -- ^ @y@
         Type         -- ^ @A@
-    
-    deriving Show
 
 
 -- |
@@ -56,7 +51,6 @@ data Sequent = Sequent
     { antecedent    :: Context
     , judgement     :: Judgement
     }
-    deriving Show
 
 
 -- |
@@ -71,5 +65,4 @@ data Deduction = Deduction
     { hypotheses :: [Sequent]
     , conclusion :: Sequent
     }
-    deriving Show
 
