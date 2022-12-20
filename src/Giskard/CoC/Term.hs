@@ -83,9 +83,9 @@ instance Applicative Term' where
 -- analogous to the abstraction typing rule:
 --
 -- @
---    C, x : A |- e : B
---  ---------------------
---   C |- \ (x : A) -> e
+--        C, x : A |- e : B
+--  ------------------------------
+--   C |- \ (x : A) -> e : A -> B
 -- @
 -- 
 -- Where all points in @e@ are either @x@, or variables in @C@.
