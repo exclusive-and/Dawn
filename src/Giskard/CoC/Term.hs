@@ -18,7 +18,6 @@ module Giskard.CoC.Term
 
 import Control.Monad (ap, liftM)
 import Data.Text (Text)
-import GHC.Generics (Generic)
 
 
 -----------------------------------------------------------
@@ -91,7 +90,6 @@ instance Applicative Term' where
 -- Where all points in @e@ are either @x@, or variables in @C@.
 -- 
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
-    deriving Generic
     
 instance Functor f => Functor (Abs b f) where
     fmap f (Abs m) = Abs $ fmap (fmap (fmap f)) m
@@ -109,15 +107,15 @@ abstract test tm = Abs $ do
         Nothing -> Subterm (pure a)
 
 -- |
--- Eliminate an abstraction by replacing bound variables with subterms.
+-- Eliminate an abstraction by replacing bound variables with subterms
+-- using a substitution function.
 --
 instantiate :: Monad f => (b -> f a) -> Abs b f a -> f a
-instantiate inst (Abs m) = do
-    var <- m
-    case var of
+instantiate inst (Abs m) =
+    m >>= \case
         Bound   b -> inst b
         Subterm a -> a
-        
+
 -- |
 -- A thing that's like an abstraction with a strategy for free variable
 -- substitutions.
