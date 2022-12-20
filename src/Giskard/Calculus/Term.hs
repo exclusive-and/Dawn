@@ -184,11 +184,20 @@ mkLam nm dom tm = Lam dom $ abstract1 nm tm
 -- Syntactic Equality
 -----------------------------------------------------------
 
+-- |
+-- Constructions that have a notion of syntactic equality.
+-- 
 class SynEq a where
     synEq :: a -> a -> Bool
+
+-- Some base instances for syntactic equality. 'Name', '()', and 'Int'
+-- have trivial syntactic equality thanks to their 'Eq' instances.
+instance SynEq Text where synEq = (==)
+instance SynEq ()   where synEq = (==)
+instance SynEq Int  where synEq = (==)
     
 -- |
--- Compare two terms for syntactic equality.
+-- Compare two terms in the calculus for syntactic equality.
 -- 
 synEqTerms :: SynEq a => Term' a -> Term' a -> Bool
 synEqTerms t1 t2 = case (t1, t2) of
@@ -206,24 +215,33 @@ synEqTerms t1 t2 = case (t1, t2) of
 
 instance SynEq a => SynEq (Term' a) where
     synEq = synEqTerms
-
-instance SynEq Text where
-    synEq = (==)
     
 instance SynEq a => SynEq [a] where
     synEq vs1 vs2
         | length vs1 == length vs2 = and $ zipWith synEq vs1 vs2
         | otherwise                = False
 
-
+-- |
+-- Abstractions have trivial syntactic equality by the syntactic
+-- equality of their underlying terms.
+-- 
+synEqAbs :: (SynEq b, SynEq a) => Abs b f a -> Abs b f a -> Bool
+synEqAbs (Abs m1) (Abs m2) = synEqTerm m1 m2
+        
 instance (SynEq b, SynEq a) => SynEq (Abs b Term' a) where
-    synEq (Abs m1) (Abs m2) = synEq m1 m2
+    synEq = synEqAbs
+
+-- |
+-- Points have syntactic equality if both bound variables and free
+-- subterms both have syntactic equality.
+-- 
+synEqPoints :: (SynEq b, SynEq a) => Point b a -> Point b a -> Bool
+synEqPoints p1 p2 = case (p1, p2) of
+    (Bound   b1, Bound   b2) -> synEq b1 b2
+    (Subterm a1, Subterm a2) -> synEq a1 a2
+    (_         , _         ) -> False
 
 instance (SynEq b, SynEq a) => SynEq (Point b a) where
-    synEq p1 p2 = case (p1, p2) of
-        (Bound b1  , Bound b2  ) -> synEq b1 b2
-        (Subterm a1, Subterm a2) -> synEq a1 a2
-        (_         , _         ) -> False
+    synEq = synEqPoints
 
-instance SynEq () where synEq = (==)
-        
+
