@@ -2,14 +2,14 @@
 -----------------------------------------------------------
 -- |
 -- Module       : Giskard.CoC.Ppr
--- Description  : Pretty-printing for CoC Types
+-- Description  : Pretty-printing for Calculus IR
 -----------------------------------------------------------
-module Giskard.CoC.Ppr where
+module Giskard.Calculus.Ppr where
 
-import              Giskard.CoC.Contexts
-import              Giskard.CoC.Deduction
-import              Giskard.CoC.Term
-import              Giskard.CoC.Typechecking
+import              Giskard.Calculus.Contexts
+import              Giskard.Calculus.Deduction
+import              Giskard.Calculus.Term
+import              Giskard.Typechecking.CoC
 
 import              Data.Text (Text, pack)
 import qualified    Data.Text as Text

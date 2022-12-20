@@ -1,17 +1,17 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.CoC.Contexts
--- Description  : Contexts and Telescopes of the Calculus of Constructions
+-- Module       : Giskard.Calculus.Contexts
+-- Description  : Contexts and Telescopes of the Calculus
 -----------------------------------------------------------
-module Giskard.CoC.Contexts
+module Giskard.Calculus.Contexts
     ( Context (..)
     , Declaration (..)
     , emptyCtxt
     , ctxtToTele
     ) where
 
-import Giskard.CoC.Term
+import Giskard.Calculus.Term
 
 
 -- |

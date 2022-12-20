@@ -69,8 +69,8 @@ Library
                       transformers            >= 0.5.2.0  && < 0.7,
                       unordered-containers    >= 0.2.3.3  && < 0.3
 
-  Exposed-modules:    Giskard.CoC.Contexts
-                      Giskard.CoC.Deduction
-                      Giskard.CoC.Ppr
-                      Giskard.CoC.Term
-                      Giskard.CoC.Typechecking
+  Exposed-modules:    Giskard.Calculus.Contexts
+                      Giskard.Calculus.Deduction
+                      Giskard.Calculus.Ppr
+                      Giskard.Calculus.Term
+                      Giskard.Typechecking.CoC

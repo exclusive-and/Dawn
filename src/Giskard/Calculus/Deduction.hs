@@ -1,15 +1,15 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.CoC.Deduction
+-- Module       : Giskard.Calculus.Deduction
 -- Description  : Knowledge Representation and Reasoning in Giskard
 -----------------------------------------------------------
-module Giskard.CoC.Deduction
+module Giskard.Calculus.Deduction
     ( Judgement (..), Sequent (..), Deduction (..)
     ) where
 
-import Giskard.CoC.Contexts
-import Giskard.CoC.Term
+import Giskard.Calculus.Contexts
+import Giskard.Calculus.Term
 
 
 -- |

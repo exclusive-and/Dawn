@@ -6,12 +6,12 @@
 -- Module       : Giskard.CoC.Typechecking
 -- Description  : Type Checker using Typing Judgements and Deductions
 -----------------------------------------------------------
-module Giskard.CoC.Typechecking
+module Giskard.Typechecking.CoC
     where
 
-import Giskard.CoC.Contexts
-import Giskard.CoC.Deduction
-import Giskard.CoC.Term
+import Giskard.Calculus.Contexts
+import Giskard.Calculus.Deduction
+import Giskard.Calculus.Term
 
 
 -- |

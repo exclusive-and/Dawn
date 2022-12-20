@@ -1,10 +1,10 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.CoC.Term
--- Description  : Calculus of Constructions Term Syntax
+-- Module       : Giskard.Calculus.Term
+-- Description  : Calculus Term Syntax
 -----------------------------------------------------------
-module Giskard.CoC.Term
+module Giskard.Calculus.Term
     ( Term' (..), Type'
     , bindTerm
     , Abs (..), AbsLike (..)
