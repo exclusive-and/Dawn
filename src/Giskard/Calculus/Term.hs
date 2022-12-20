@@ -262,9 +262,11 @@ instance (SynEq b, SynEq a) => SynEq (Point b a) where
 type Subst a = Map a (Term' a)
 
 -- |
--- Apply a substitution map to a term. Works by looking up each of the
--- term's points in the substitution map. If the point is a key in the
--- map, replace it with the corresponding subterm. Otherwise, do nothing.
+-- Apply a substitution map to a term.
+-- 
+-- Works by looking up each of the term's points in the substitution
+-- map. Replace each point found in the map by its corresponding term.
+-- Otherwise, if we don't find a point, do nothing to it.
 -- 
 applySubst :: Ord a => Term' a -> Subst a -> Term' a
 applySubst tm subst = do
