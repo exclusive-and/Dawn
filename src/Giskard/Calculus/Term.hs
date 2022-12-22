@@ -7,12 +7,14 @@
 module Giskard.Calculus.Term
     ( Term' (..), Type'
     , bindTerm
-    , Abs (..), AbsLike (..)
+    , Abs (..)
     , abstract, instantiate
+    , AbsLike (..)
     , bindAbsSubterms
     , Point (..)
-    , Term, Type, Name
-    , abstract1, mkPi, mkLam
+    , Term, Type
+    , abstract1, instantiate1
+    , mkPi, mkLam
     , SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
@@ -20,10 +22,11 @@ module Giskard.Calculus.Term
     , applySubst
     ) where
 
+import              Giskard.Names
+
 import              Control.Monad (ap, liftM)
 import              Data.Map (Map)
 import qualified    Data.Map as Map
-import              Data.Text (Text)
 
 
 -----------------------------------------------------------
@@ -54,7 +57,7 @@ data Term' a
     | App   (Term' a) [Term' a]
     -- | The top-level type of contexts and telescopes.
     | Star
-    deriving Functor
+    deriving (Functor, Foldable, Traversable)
     
 type Type' = Term'
 
@@ -118,10 +121,7 @@ instantiate inst (Abs m) =
     m >>= \case
         Bound   b -> inst b
         Subterm a -> a
-
-instance Functor f => Functor (Abs b f) where
-    fmap f (Abs m) = Abs $ fmap (fmap (fmap f)) m
-
+    
 -- |
 -- A thing that's like an abstraction with a strategy for free variable
 -- substitutions.
@@ -138,7 +138,37 @@ class AbsLike t where
 bindAbsSubterms :: Monad f => Abs b f a -> (a -> f c) -> Abs b f c
 bindAbsSubterms (Abs m) s = Abs $ liftM (fmap (>>= s)) m
     
-instance AbsLike (Abs b) where (>>>=) = bindAbsSubterms
+instance AbsLike (Abs b) where
+    (>>>=) = bindAbsSubterms
+
+-- |
+-- Substitution similar to 'bindAbsSubterms'. Substitutes points
+-- with entire abstractions, rather than merely terms.
+-- 
+bindAbs :: Monad f => Abs b f a -> (a -> Abs b f c) -> Abs b f c
+bindAbs (Abs m) f = Abs $ do
+    var <- m
+    case var of
+        Bound   b -> pure $ Bound b
+        Subterm a -> a >>= unAbs . f
+
+instance Monad f => Monad (Abs b f) where
+    (>>=) = bindAbs
+
+-- Miscellaneous 'Abs' instances.
+
+instance Functor f => Functor (Abs b f) where
+    fmap f (Abs m) = Abs $ fmap (fmap $ fmap f) m
+
+instance Monad f => Applicative (Abs b f) where
+    pure  = Abs . pure . Subterm . pure
+    (<*>) = ap
+
+instance Traversable f => Traversable (Abs b f) where
+    traverse f (Abs m) = Abs <$> traverse (traverse $ traverse f) m
+
+instance Foldable f => Foldable (Abs b f) where
+    foldMap f (Abs m) = foldMap (foldMap $ foldMap f) m
 
 
 -----------------------------------------------------------
@@ -157,6 +187,15 @@ instance Functor (Point b) where
         Bound   b -> Bound b
         Subterm a -> Subterm $ f a
 
+instance Traversable (Point b) where
+    traverse f p = case p of
+        Bound   b -> pure $ Bound b
+        Subterm a -> Subterm <$> f a
+        
+instance Foldable (Point b) where
+    foldMap f p = case p of
+        Bound   _ -> mempty
+        Subterm a -> f a
         
 -----------------------------------------------------------
 -- Convenient Term API
@@ -164,14 +203,18 @@ instance Functor (Point b) where
 
 type Term = Term' Name
 type Type = Term
--- TEMPORARY
-type Name = Text
 
 -- |
 -- Abstract a term over a single point (using 'Eq', not 'SynEq').
 -- 
 abstract1 :: (Monad f, Eq a) => a -> f a -> Abs () f a
 abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
+
+-- |
+-- Instantiate a single bound variable in an abstraction.
+-- 
+instantiate1 :: Monad f => f a -> Abs () f a -> f a
+instantiate1 a = instantiate (const a)
 
 -- |
 -- Make a pi-type from a type by abstracting over a name.
@@ -196,11 +239,10 @@ mkLam nm dom tm = Lam dom $ abstract1 nm tm
 class SynEq a where
     synEq :: a -> a -> Bool
 
--- Some base instances for syntactic equality. 'Name', '()', and 'Int'
+-- Some base instances for syntactic equality. 'Text', '()', and 'Int'
 -- have trivial syntactic equality thanks to their 'Eq' instances.
-instance SynEq Text where synEq = (==)
 instance SynEq ()   where synEq = (==)
-instance SynEq Int  where synEq = (==)
+instance SynEq Name where synEq = (==)
     
 -- |
 -- Compare two terms in the calculus for syntactic equality.

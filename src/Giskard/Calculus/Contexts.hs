@@ -6,12 +6,14 @@
 -----------------------------------------------------------
 module Giskard.Calculus.Contexts
     ( Context (..)
-    , Declaration (..)
     , emptyCtxt
+    , Declaration (..)
+    , declName, declType
     , ctxtToTele
     ) where
 
 import Giskard.Calculus.Term
+import Giskard.Names
 
 
 -- |
@@ -20,23 +22,31 @@ import Giskard.Calculus.Term
 --
 data Context
     -- | A context with a generic name: @C@.
-    = NamedContext Name
+    = NamedContext   Name
     -- | A context list: @(x : A), (y : B), ...@.
-    | ContextList [Declaration]
+    | ContextList    [Declaration]
     -- | Concatenated contexts: @C ; D@
-    | ConcatContexts
-        Context
-        Context
-
-data Declaration
-    = Assume Name Type
-    | Define Name Term Type
+    | ConcatContexts Context Context
 
 -- |
 -- Initial empty context.
 --
 emptyCtxt :: Context
 emptyCtxt = ContextList []
+    
+data Declaration
+    = Assume Name Type
+    | Define Name Term Type
+
+declName :: Declaration -> Name
+declName = \case
+    Assume nm   _ -> nm
+    Define nm _ _ -> nm
+
+declType :: Declaration -> Type
+declType = \case
+    Assume _   ty -> ty
+    Define _ _ ty -> ty
 
 -- |
 -- Convert a context list to a telescope term.

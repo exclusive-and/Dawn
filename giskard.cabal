@@ -71,6 +71,9 @@ Library
 
   Exposed-modules:    Giskard.Calculus.Contexts
                       Giskard.Calculus.Deduction
+                      Giskard.Calculus.Match
                       Giskard.Calculus.Ppr
                       Giskard.Calculus.Term
-                      Giskard.Typechecking.CoC
+                      Giskard.Names
+
+                      Test

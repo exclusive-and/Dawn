@@ -9,7 +9,7 @@ module Giskard.Calculus.Ppr where
 import              Giskard.Calculus.Contexts
 import              Giskard.Calculus.Deduction
 import              Giskard.Calculus.Term
-import              Giskard.Typechecking.CoC
+import              Giskard.Names
 
 import              Data.Text (Text, pack)
 import qualified    Data.Text as Text
@@ -21,7 +21,7 @@ class Ppr a where
 pprTerm :: Int -> Term -> Text
 pprTerm lvl tm = case tm of
     Star    -> "*"
-    Point p -> p
+    Point p -> pack $ show p
 
     Pi dom cod
         -> "Pi ( " <> pack (show lvl) <> " : " <> pprTerm lvl dom <> " )"
@@ -41,19 +41,19 @@ pprTerm lvl tm = case tm of
         <> Text.concat (map (\x -> " (" <> pprTerm lvl x <> ")") xs)
   where
     pprAbs e = pprTerm (lvl + 1) (inst e)
-    inst   e = instantiate (const $ pure $ pack $ show lvl) e
+    inst   e = instantiate (const $ pure lvl) e
 
 instance Ppr Term where ppr = pprTerm 0
         
 
 pprContext :: Context -> Text
 pprContext = \case
-    NamedContext ctxtName -> ctxtName
+    NamedContext ctxtName -> pack $ show ctxtName
 
     ContextList xs -> Text.intercalate ", " $ map go xs where
-        go (Assume name   ty) = "(" <> name <> " : " <> ppr ty <> ")"
+        go (Assume name   ty) = "(" <> pack (show name) <> " : " <> ppr ty <> ")"
         go (Define name e ty) =
-            "(" <> name <> " : " <> ppr ty <> " := " <> ppr e <> ")"
+            "(" <> pack (show name) <> " : " <> ppr ty <> " := " <> ppr e <> ")"
 
     ConcatContexts ctxt1 ctxt2
         -> pprContext ctxt1 <> " ; " <> pprContext ctxt2
