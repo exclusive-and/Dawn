@@ -157,15 +157,15 @@ instance Monad f => Monad (Abs b f) where
 
 -- Miscellaneous 'Abs' instances.
 
+instance Traversable f => Traversable (Abs b f) where
+    traverse f (Abs m) = Abs <$> traverse (traverse $ traverse f) m
+
 instance Functor f => Functor (Abs b f) where
     fmap f (Abs m) = Abs $ fmap (fmap $ fmap f) m
 
 instance Monad f => Applicative (Abs b f) where
     pure  = Abs . pure . Subterm . pure
     (<*>) = ap
-
-instance Traversable f => Traversable (Abs b f) where
-    traverse f (Abs m) = Abs <$> traverse (traverse $ traverse f) m
 
 instance Foldable f => Foldable (Abs b f) where
     foldMap f (Abs m) = foldMap (foldMap $ foldMap f) m
