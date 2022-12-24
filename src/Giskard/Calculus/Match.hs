@@ -2,6 +2,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+-----------------------------------------------------------
+-- |
+-- Module       : Giskard.Calculus.Match
+-- Description  : Pattern Matching for Giskard Calculus
+-----------------------------------------------------------
 module Giskard.Calculus.Match where
 
 import              Giskard.Calculus.Term
@@ -34,9 +39,14 @@ instance NameMonad MatchM where
         return i
 
 -- |
--- Try to match a term against a pattern-term.
+-- Try to match a term as a pattern with another term.
 -- 
-matchTerms :: (a -> Term' c -> MatchM ()) -> Term' a -> Term' c -> MatchM ()
+matchTerms
+    :: (a -> Term' c -> MatchM ())  -- ^ Extensible point matching function.
+    -> Term' a                      -- ^ Pattern term.
+    -> Term' c                      -- ^ Term to match with.
+    -> MatchM ()
+
 matchTerms matchPoint pat tm = case (pat, tm) of
     (Point p      , _         ) -> matchPoint p tm
 
@@ -61,9 +71,9 @@ matchTerms matchPoint pat tm = case (pat, tm) of
 -- 
 matchAbs
     :: SynEq b
-    => (a -> Term' c -> MatchM ())
-    -> Abs b Term' a
-    -> Abs b Term' c
+    => (a -> Term' c -> MatchM ())  -- ^ Extensible point matching function.
+    -> Abs b Term' a                -- ^ Pattern abstraction.
+    -> Abs b Term' c                -- ^ Abstraction to match with.
     -> MatchM ()
 
 matchAbs f (Abs pm) (Abs m) = matchTerms f' pm m where
