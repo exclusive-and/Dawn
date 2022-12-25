@@ -27,6 +27,7 @@ import              Giskard.Names
 import              Control.Monad (ap, liftM)
 import              Data.Map (Map)
 import qualified    Data.Map as Map
+import              Data.Traversable
 
 
 -----------------------------------------------------------
@@ -58,7 +59,7 @@ data Term' a
     -- | The top-level type of contexts and telescopes.
     | Star
     deriving (Functor, Foldable, Traversable)
-    
+
 type Type' = Term'
 
 -- |
@@ -73,7 +74,7 @@ bindTerm t s = case t of
     Let   ty u e  -> Let (ty  >>= s) (u >>= s) (e >>>= s)
     App   f e     -> App (f   >>= s) (map (>>= s) e)
     Star          -> Star
-    
+
 instance Monad Term' where (>>=) = bindTerm
 
 instance Applicative Term' where
@@ -84,7 +85,7 @@ instance Applicative Term' where
 -----------------------------------------------------------
 -- Abstractions and Context Strengthening
 -----------------------------------------------------------
-    
+
 -- |
 -- An abstraction binds a variable in a term, so that all points in
 -- the term are either binders, or subterms with no bound points. It is
@@ -121,7 +122,7 @@ instantiate inst (Abs m) =
     m >>= \case
         Bound   b -> inst b
         Subterm a -> a
-    
+
 -- |
 -- A thing that's like an abstraction with a strategy for free variable
 -- substitutions.
@@ -137,7 +138,7 @@ class AbsLike t where
 -- 
 bindAbsSubterms :: Monad f => Abs b f a -> (a -> f c) -> Abs b f c
 bindAbsSubterms (Abs m) s = Abs $ liftM (fmap (>>= s)) m
-    
+
 instance AbsLike (Abs b) where
     (>>>=) = bindAbsSubterms
 
@@ -178,25 +179,18 @@ instance Foldable f => Foldable (Abs b f) where
 -- |
 -- A thing that is either a binder or a subterm.
 -- 
-data Point b a
-    = Bound     b
-    | Subterm   a
-
-instance Functor (Point b) where
-    fmap f p = case p of
-        Bound   b -> Bound b
-        Subterm a -> Subterm $ f a
+data Point b a = Bound b | Subterm a
 
 instance Traversable (Point b) where
     traverse f p = case p of
         Bound   b -> pure $ Bound b
         Subterm a -> Subterm <$> f a
-        
+
+instance Functor (Point b) where fmap = fmapDefault
+
 instance Foldable (Point b) where
-    foldMap f p = case p of
-        Bound   _ -> mempty
-        Subterm a -> f a
-        
+    foldMap = foldMapDefault
+
 -----------------------------------------------------------
 -- Convenient Term API
 -----------------------------------------------------------
@@ -243,7 +237,7 @@ class SynEq a where
 -- have trivial syntactic equality thanks to their 'Eq' instances.
 instance SynEq ()   where synEq = (==)
 instance SynEq Name where synEq = (==)
-    
+
 -- |
 -- Compare two terms in the calculus for syntactic equality.
 -- 
@@ -263,7 +257,7 @@ synEqTerms t1 t2 = case (t1, t2) of
 
 instance SynEq a => SynEq (Term' a) where
     synEq = synEqTerms
-    
+
 instance SynEq a => SynEq [a] where
     synEq vs1 vs2
         | length vs1 == length vs2 = and $ zipWith synEq vs1 vs2
@@ -279,7 +273,7 @@ synEqAbs
     -> Abs b Term' a
     -> Bool
 synEqAbs (Abs m1) (Abs m2) = synEqTerms m1 m2
-        
+
 instance (SynEq b, SynEq a) => SynEq (Abs b Term' a) where
     synEq = synEqAbs
 
