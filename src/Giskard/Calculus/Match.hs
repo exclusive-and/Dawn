@@ -58,9 +58,7 @@ matchTerms matchPoint pat tm = case (pat, tm) of
         matchTerms matchPoint pdom dom
         matchAbs matchPoint pe e
         
-    (App pf px    , App f x   ) -> do
-        zipWithM_ (matchTerms matchPoint) px x
-        matchTerms matchPoint pf f
+    (App pf px    , App f x   ) -> matchFunApps matchPoint pf f px x
     
     (_            , _         ) ->
         MatchM $ throwE "Match terms failed!"
@@ -95,6 +93,28 @@ matchAbs f (Abs pm) (Abs m) = matchTerms f' pm m where
         goReallyFree (Bound   b) = MatchM $ throwE "Expected FV, got BV"
         goReallyFree (Subterm a) = return a
 
+-- |
+-- Try to match two application stacks. Succeeds if all terms
+-- in the first stack match against a term in the second stack.
+-- 
+matchFunApps
+    :: (a -> Term' c -> MatchM ())
+    -> Term' a
+    -> Term' c
+    -> [Term' a]
+    -> [Term' c]
+    -> MatchM ()
+    
+matchFunApps matchPoint pf f (px:pxs) (x:xs) = do
+    matchTerms matchPoint px x
+    matchFunApps matchPoint pf f pxs xs
+    
+matchFunApps matchPoint pf f [] xs =
+    matchTerms matchPoint pf (App f xs)
+
+matchFunApps matchPoint pf f _ [] =
+    MatchM $ throwE "Couldn't match application stacks"
+        
 newMatchSub :: Name -> Term -> MatchM ()
 newMatchSub name tm = MatchM $ do
     oldMap <- matchSub <$> get
