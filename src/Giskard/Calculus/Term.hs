@@ -87,9 +87,9 @@ instance Applicative Term' where
 -----------------------------------------------------------
 
 -- |
--- An abstraction binds a variable in a term, so that all points in
--- the term are either binders, or subterms with no bound points. It is
--- analogous to the abstraction typing rule:
+-- An abstraction binds a variable in a term, so that all points
+-- in the term are either binders, or subterms with no bound points.
+-- It is analogous to the abstraction typing rule:
 --
 -- @
 --        C, x : A |- e : B
@@ -102,9 +102,9 @@ instance Applicative Term' where
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
 
 -- |
--- Abstract a term using the type rule in 'Abs'. Applies a test function
--- to each point, and replaces the point with the appropriate binder when
--- applicable.
+-- Abstract a term using the type rule in 'Abs'. Applies a test
+-- function to each point, and replaces the point with the appropriate
+-- binder when applicable.
 -- 
 abstract :: Monad f => (a -> Maybe b) -> f a -> Abs b f a
 abstract test tm = Abs $ do

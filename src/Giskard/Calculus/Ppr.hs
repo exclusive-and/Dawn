@@ -1,7 +1,7 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.CoC.Ppr
+-- Module       : Giskard.Calculus.Ppr
 -- Description  : Pretty-printing for Calculus IR
 -----------------------------------------------------------
 module Giskard.Calculus.Ppr where
@@ -18,32 +18,64 @@ import qualified    Data.Text as Text
 class Ppr a where
     ppr :: a -> Text
 
-pprTerm :: Int -> Term -> Text
-pprTerm lvl tm = case tm of
-    Star    -> "*"
-    Point p -> pack $ show p
+pprBound :: Int -> Text
+pprBound boundId = "_bound_" <> pack (show boundId)
 
-    Pi dom cod
-        -> "Pi ( " <> pack (show lvl) <> " : " <> pprTerm lvl dom <> " )"
-        <> " -> " <> pprAbs cod
+pprAbs :: Int -> Abs () Term' Text -> Text
+pprAbs bindLvl tm =
+    pprTerm' False (bindLvl + 1) $ instantiate1 (pure $ pprBound bindLvl) tm
 
-    Lam dom e
-        -> "Lam ( " <> pack (show lvl) <> " : " <> pprTerm lvl dom <> " )"
-        <> " -> " <> pprAbs e
+pprPi :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprPi bindLvl dom cod =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    cod' = pprAbs bindLvl cod
+   in
+    "Pi (" <> x' <> " : " <> dom' <> ") -> " <> cod'
 
-    Let ty e body
-        -> "Let ( " <> pack (show lvl) <> " : " <> pprTerm lvl ty <> " )"
-        <> " := " <> pprTerm lvl e
-        <> " In " <> pprAbs body
+pprLam :: Int -> Type' Text -> Abs () Term' Text -> Text
+pprLam bindLvl dom e =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    e'   = pprAbs bindLvl e
+  in
+    "Lam (" <> x' <> " : " <> dom' <> ") -> " <> e'
 
-    App f xs
-        -> "(" <> pprTerm lvl f <> ")"
-        <> Text.concat (map (\x -> " (" <> pprTerm lvl x <> ")") xs)
+pprLet :: Int -> Type' Text -> Term' Text -> Abs () Term' Text -> Text
+pprLet bindLvl dom u e =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    u'   = pprTerm' False bindLvl u
+    e'   = pprAbs bindLvl e
+  in
+    "Let (" <> x' <> " : " <> dom' <> ") := " <> u' <> " In " <> e' 
+
+pprApp :: Int -> Term' Text -> [Term' Text] -> Text
+pprApp bindLvl f xs =
+  let
+    f'  = pprTerm' True bindLvl f
+    xs' = map (pprTerm' True bindLvl) $ reverse xs
+  in
+    f' <> " " <> Text.intercalate " " xs'
+    
+pprTerm' :: Bool -> Int -> Term' Text -> Text
+pprTerm' shouldParen bindLvl tm = case tm of
+    Star            -> "*"
+    Point point     -> point
+    Pi dom cod      -> parens $ pprPi bindLvl dom cod
+    Lam dom e       -> parens $ pprLam bindLvl dom e
+    Let ty e body   -> parens $ pprLet bindLvl ty e body
+    App f xs        -> parens $ pprApp bindLvl f xs
   where
-    pprAbs e = pprTerm (lvl + 1) (inst e)
-    inst   e = instantiate (const $ pure lvl) e
+    parens s = if shouldParen then "(" <> s <> ")" else s
 
-instance Ppr Term where ppr = pprTerm 0
+pprTerm :: Show a => Term' a -> Text
+pprTerm = pprTerm' False 0 . (pure . pack . show =<<)
+
+instance Show a => Ppr (Term' a) where ppr = pprTerm
         
 
 pprContext :: Context -> Text
