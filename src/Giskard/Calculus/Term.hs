@@ -213,13 +213,13 @@ instantiate1 a = instantiate (const a)
 -- |
 -- Make a pi-type from a type by abstracting over a name.
 -- 
-mkPi :: Name -> Type -> Type -> Type
+mkPi :: Eq a => a -> Type' a -> Type' a -> Type' a
 mkPi nm dom cod = Pi dom $ abstract1 nm cod
 
 -- |
 -- Make a lambda-term from a term by abstracting over a name.
 -- 
-mkLam :: Name -> Type -> Term -> Term
+mkLam :: Eq a => a -> Type' a -> Term' a -> Term' a
 mkLam nm dom tm = Lam dom $ abstract1 nm tm
 
 
