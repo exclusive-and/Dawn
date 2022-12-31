@@ -15,6 +15,7 @@ module Giskard.Calculus.Term
     , Term, Type
     , abstract1, instantiate1
     , mkPi, mkLam
+    , whnf
     , SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
@@ -221,6 +222,21 @@ mkPi nm dom cod = Pi dom $ abstract1 nm cod
 -- 
 mkLam :: Eq a => a -> Type' a -> Term' a -> Term' a
 mkLam nm dom tm = Lam dom $ abstract1 nm tm
+
+-- |
+-- Evaluate a term to Weak Head-Normal Form (WHNF).
+-- 
+whnf :: Term' a -> Term' a
+
+whnf (App f (x:xs)) =
+    case f of
+        Pi _ cod -> inst cod
+        Lam _ e  -> inst e
+        f'       -> App f' (x:xs)
+  where
+    inst e = whnf $ App (instantiate1 x e) xs
+        
+whnf e = e
 
 
 -----------------------------------------------------------
