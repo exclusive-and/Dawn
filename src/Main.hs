@@ -12,9 +12,18 @@ import Control.Monad.Trans.Except
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Numeric.LinearAlgebra hiding (double, (<>))
+import qualified Numeric.LinearAlgebra as M
+
 
 tcmTest :: TCM Type
-tcmTest = infer $ App matrix [Point $ Lit $ IntLit 7, Point $ Lit $ IntLit 7, double]
+tcmTest = do
+    let m1 = Point $ Lit $ MatDoubleLit 7 4 $ (7 >< 4) [1..]
+        m2 = Point $ Lit $ MatDoubleLit 4 9 $ (4 >< 9) [1..]
+        a1 = App (var 5) [intLit 7, intLit 4, intLit 9, double, m1, m2]
+        m3 = Point $ Lit $ MatDoubleLit 9 7 $ (9 >< 7) [1..]
+        a2 = App (var 5) [intLit 7, intLit 9, intLit 7, double, a1, m3]
+    infer a2
 
 main :: IO ()
 main = do

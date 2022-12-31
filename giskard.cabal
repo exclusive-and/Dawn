@@ -6,7 +6,7 @@ License:              BSD-2-Clause
 License-file:         LICENSE
 Author:               Simon Lovell Bart
 Maintainer:           Simon Lovell Bart
-Category:             Hardware
+Category:             
 Build-type:           Simple
 
 common common-options
@@ -43,8 +43,7 @@ Library
   ghc-options:        -Wall -Wcompat
   CPP-Options:        -DCABAL
 
-  other-extensions:   CPP
-                      DeriveAnyClass
+  other-extensions:   DeriveAnyClass
                       GeneralizedNewtypeDeriving
                       MultiParamTypeClasses
                       RankNTypes
@@ -57,6 +56,7 @@ Library
                       exceptions              >= 0.8.3    && < 0.11.0,
                       hashable                >= 1.2.1.0  && < 1.5,
                       haskell-src-meta        >= 0.8      && < 0.9,
+                      hmatrix,
                       string-interpolate      ^>= 0.3,
                       lens                    >= 4.10     && < 5.2.0,
                       mtl                     >= 2.1.2    && < 2.3,
@@ -69,11 +69,17 @@ Library
                       transformers            >= 0.5.2.0  && < 0.7,
                       unordered-containers    >= 0.2.3.3  && < 0.3
 
-  Exposed-modules:    Giskard.Calculus.Contexts
-                      Giskard.Calculus.Deduction
-                      Giskard.Calculus.Match
-                      Giskard.Calculus.Ppr
+  Exposed-modules:    Main
                       Giskard.Calculus.Term
+                      Giskard.Calculus.Match
+                      Giskard.Calculus.Contexts
+                      Giskard.Calculus.Deduction
+                      Giskard.Calculus.Ppr
                       Giskard.Names
+                      Giskard.Telepath.Types
+                      -- Giskard.Telepath.Graph
+                      -- Giskard.Telepath.Ops
+                      -- Giskard.Telepath.Autograd
+                      -- Giskard.Telepath.Engine
 
-                      Test
+  extra-libraries:    blas lapack

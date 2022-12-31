@@ -9,6 +9,7 @@
 module Giskard.Telepath.Types where
 
 import              Giskard.Calculus.Term hiding (Term, Type)
+import              Giskard.Calculus.Ppr
 import              Giskard.Names
 
 import              Control.Monad
@@ -18,6 +19,8 @@ import              Data.Functor.Identity
 import              Data.Map (Map)
 import qualified    Data.Map as Map
 import              Data.Text (Text)
+import qualified    Data.Text as Text
+import              GHC.Int
 
 import              Numeric.LinearAlgebra (Matrix)
 import qualified    Numeric.LinearAlgebra as M
@@ -39,10 +42,30 @@ data P = Var Name | Lit Literal
 instance SynEq P where synEq = (==)
 
 data Literal
-    = IntLit    Int
-    | DoubleLit Double
+    = IntLit        Int
+    | MatIntLit     Int Int (Matrix Int64)
+    | DoubleLit     Double
+    | MatDoubleLit  Int Int (Matrix Double)
     deriving (Eq, Show)
 
+-- |
+-- Create a variable point.
+--
+var :: Name -> Term
+var = Point . Var
+    
+-- |
+-- Create an integer literal point.
+--
+intLit :: Int -> Term
+intLit = Point . Lit . IntLit
+
+-- |
+-- Create a double literal point
+--
+doubleLit :: Double -> Term
+doubleLit = Point . Lit . DoubleLit
+    
 
 data TCException
     = Mismatch      Type Type   -- ^ Expected one type, got another.
@@ -106,8 +129,10 @@ getVarType x = do
 getLitType :: Monad m => Literal -> TCMT m Type
 getLitType x =
     pure $ case x of
-        IntLit _    -> integer
-        DoubleLit _ -> double
+        IntLit _            -> integer
+        MatIntLit m n _     -> App matrix [intLit m, intLit n, integer]
+        DoubleLit _         -> double
+        MatDoubleLit m n _  -> App matrix [intLit m, intLit n, double]
         
 -- |
 -- Infer the type of a term.
@@ -159,7 +184,8 @@ inferApp hd args = do
     go ty [] = pure ty
     
     -- Not a pi-type, but there are still some arguments left.
-    go ty _ = throwTC $ OtherTCErr "Expected pi-type"
+    go ty remaining = throwTC $ OtherTCErr $ "Expected pi-type, got "
+                                          <> ppr hd <> " : " <> ppr ty
     
 -- |
 -- Typecheck a term against an expected type.
@@ -178,51 +204,83 @@ check tm expected = do
        
 star, integer, double, matrix :: Term
 star     = Star
-integer  = Point (Var 1)
-double   = Point (Var 2)
-matrix   = Point (Var 3)
+integer  = var 1
+double   = var 2
+matrix   = var 3
 
 integerTy, doubleTy, matrixTy :: Term
 integerTy = star
 doubleTy  = star
-matrixTy  = mkPi (Var 4) integer
-          $ mkPi (Var 5) integer
-          $ mkPi (Var 6) star $ star
-       
+matrixTy  = mkPi (Var 10) integer
+          $ mkPi (Var 11) integer
+          $ mkPi (Var 12) star $ star
+
 -- |
--- Important constants:
---
---  (0) Type
---  (1) Int     : Type
---  (2) Double  : Type
---  (3) Matrix  : Int -> Int -> Type -> Type
+-- Matrix constructor type.
 -- 
-constants :: Map Name Term
-constants = Map.fromList
-    [ (1, integerTy)
-    , (2, doubleTy )
-    , (3, matrixTy )
-    ]
-    
-{-
+mkMatrixTy :: Term
+mkMatrixTy = mkPi (Var 10) integer
+           $ mkPi (Var 11) integer
+           $ mkPi (Var 12) star
+           $ App matrix [var 10, var 11, var 12]
+
 -- |
+-- Matrix constructor.
+-- 
+mkMatrix :: Term
+mkMatrix = var 4
+
+-- |
+-- Type of matrix multiplication: 
 -- (m k n : Nat) -> (t : Type) -> Mat m k t -> Mat k n t -> Mat m n t
 matmulTy :: Type
 matmulTy =
   let
     -- a := Mat m k t
-    aty = App matrix [Point 7, Point 5, Point 4]
+    aty = App matrix [var 10, var 11, var 13]
     -- b := Mat k n t
-    bty = App matrix [Point 7, Point 6, Point 5]
+    bty = App matrix [var 11, var 12, var 13]
     -- c := Mat m n t
-    cty = App matrix [Point 7, Point 6, Point 4]
+    cty = App matrix [var 10, var 12, var 13]
     
-    -- g := (t : Type) -> Mat m k t -> Mat k n t -> Mat m n t
-    gty = mkPi 7 star $ mkPi 8 aty $ mkPi 9 bty $ cty
+    -- h := Mat m k t -> Mat k n t -> Mat m n t
+    hty = mkPi (Var 14) aty $ mkPi (Var 15) bty $ cty
+    
+    -- g := (t : Type) -> h
+    gty = mkPi (Var 13) star hty
     
     -- f := (m k n : Nat) -> g
     --   == (m k n : Nat) -> Mat m k t -> Mat k n t -> Mat m n t
-    fty = mkPi 4 integer $ mkPi 5 integer $ mkPi 6 integer gty
+    fty = mkPi (Var 10) integer
+        $ mkPi (Var 11) integer
+        $ mkPi (Var 12) integer $ gty
   in
     fty
-    -}
+
+-- |
+-- Matrix multiplication.
+-- 
+matmul :: Term
+matmul = var 5
+    
+
+-- |
+-- Important constants:
+--
+--  (0) Type
+--  (1) Int      : Type
+--  (2) Double   : Type
+--  (3) Matrix   : Int -> Int -> Type -> Type
+--  (4) MkMatrix : (m n : Int) -> (t : Type) -> Matrix m n t
+--  (5) Matmul   : (m k n : Int) -> (t : Type)
+--              -> Matrix m k t -> Matrix k n t -> Matrix m n t
+-- 
+constants :: Map Name Term
+constants = Map.fromList
+    [ (1, integerTy )
+    , (2, doubleTy  )
+    , (3, matrixTy  )
+    , (4, mkMatrixTy)
+    , (5, matmulTy  )
+    ]
+    
