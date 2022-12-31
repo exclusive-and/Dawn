@@ -1,6 +1,11 @@
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+-----------------------------------------------------------
+-- |
+-- Module       : Giskard.Telepath.Types
+-- Descrption   : Term Calculus Implementation of Telepath's Type System
+-----------------------------------------------------------
 module Giskard.Telepath.Types where
 
 import              Giskard.Calculus.Term hiding (Term, Type)
@@ -18,9 +23,16 @@ import              Numeric.LinearAlgebra (Matrix)
 import qualified    Numeric.LinearAlgebra as M
 
 
+-----------------------------------------------------------
+-- Typechecker
+-----------------------------------------------------------
+
 type Term = Term' P
 type Type = Term
 
+-- |
+-- Points can be variable names or literals.
+-- 
 data P = Var Name | Lit Literal
     deriving (Eq, Show)
 
@@ -31,35 +43,29 @@ data Literal
     | DoubleLit Double
     deriving (Eq, Show)
 
-star, integer, double, matrix :: Term
-star     = Star
-integer  = Point (Var 1)
-double   = Point (Var 2)
-matrix   = Point (Var 3)
-
-integerTy, doubleTy, matrixTy :: Term
-integerTy = star
-doubleTy  = star
-matrixTy  = mkPi (Var 4) integer
-          $ mkPi (Var 5) integer
-          $ mkPi (Var 6) star $ star
-
 
 data TCException
-    = Mismatch      Type Type
-    | NotInScope    Name
-    | OtherTCErr    Text
+    = Mismatch      Type Type   -- ^ Expected one type, got another.
+    | NotInScope    Name        -- ^ Couldn't find a variable in the context.
+    | OtherTCErr    Text        -- ^ Generic exception with message.
 
 data TCState = TCState
     { termTyMap     :: Map Name Term
     , nameSupply    :: Name
     }
 
+-- |
+-- Main typechecker monad transformer. Stores the context and environment
+-- being typechecked.
+-- 
 newtype TCMT m a = TCM
     { runTC :: ExceptT TCException (StateT TCState m) a }
     deriving ( Functor, Applicative, Monad
              , MonadState TCState )
 
+-- |
+-- Throw a typechecking exception.
+-- 
 throwTC :: Monad m => TCException -> TCMT m a
 throwTC = TCM . throwE
     
@@ -70,7 +76,10 @@ instance Monad m => NameMonad (TCMT m) where
         pure i
 
 type TCM = TCMT Identity
-        
+
+-- |
+-- Extend a context by tracking a free variable's type.
+-- 
 extendContext :: Monad m => Name -> Type -> TCMT m ()
 extendContext x ty = do
     tyMap <- termTyMap <$> get
@@ -81,6 +90,9 @@ extendContext x ty = do
             | synEq ty oldTy -> pure () -- Do nothing
             | otherwise      -> throwTC $ Mismatch ty oldTy
 
+-- |
+-- Get the type of a free variable from the context.
+-- 
 getVarType :: Monad m => Name -> TCMT m Type
 getVarType x = do
     tyMap <- termTyMap <$> get
@@ -88,6 +100,9 @@ getVarType x = do
         Just ty -> pure ty
         Nothing -> throwTC $ NotInScope x
 
+-- |
+-- Get the type of a literal.
+-- 
 getLitType :: Monad m => Literal -> TCMT m Type
 getLitType x =
     pure $ case x of
@@ -121,20 +136,25 @@ infer tm = case tm of
     
     Star -> throwTC $ OtherTCErr "Can't infer type of Star"
 
+-- |
+-- Infer the type of an application.
+-- 
 inferApp :: Monad m => Term -> [Term] -> TCMT m Type
 inferApp hd args = do
     fty <- infer hd
     go fty (reverse args)
   where
     go :: Monad m => Type -> [Term] -> TCMT m Type
+    -- Is a pi-type and has arguments.
     go (Pi dom cod) (x:args) = do
         xty <- check x dom
         let cod' = instantiate1 x cod
         go cod' args
 
+    -- No more arguments to check.
     go ty [] = pure ty
     
-    -- Not a pi-type
+    -- Not a pi-type, but there are still some arguments left.
     go ty _ = throwTC $ OtherTCErr "Expected pi-type"
     
 -- |
@@ -147,6 +167,24 @@ check tm expected = do
        then pure ty
        else throwTC $ Mismatch ty expected
 
+
+-----------------------------------------------------------
+-- Builtins
+-----------------------------------------------------------
+       
+star, integer, double, matrix :: Term
+star     = Star
+integer  = Point (Var 1)
+double   = Point (Var 2)
+matrix   = Point (Var 3)
+
+integerTy, doubleTy, matrixTy :: Term
+integerTy = star
+doubleTy  = star
+matrixTy  = mkPi (Var 4) integer
+          $ mkPi (Var 5) integer
+          $ mkPi (Var 6) star $ star
+       
 -- |
 -- Important constants:
 --
