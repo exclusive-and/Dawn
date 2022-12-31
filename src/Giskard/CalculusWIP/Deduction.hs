@@ -5,11 +5,15 @@
 -- Description  : Knowledge Representation and Reasoning in Giskard
 -----------------------------------------------------------
 module Giskard.Calculus.Deduction
-    ( Judgement (..), Sequent (..), Deduction (..)
+    ( Judgement (..)
+    , matchJudgements
+    , Sequent (..), Deduction (..)
     ) where
 
-import Giskard.Calculus.Contexts
 import Giskard.Calculus.Term
+import Giskard.Calculus.Match
+import Giskard.Calculus.Contexts
+import Giskard.Names
 
 
 -- |
@@ -41,6 +45,22 @@ data Judgement
         Term         -- ^ @x@
         Term         -- ^ @y@
         Type         -- ^ @A@
+
+matchJudgements
+    :: (Name -> Term -> MatchM ()) -> Judgement -> Judgement -> MatchM ()
+matchJudgements f pj j = case (pj, j) of
+    (JIsAType pty            , JIsAType ty           ) ->
+        matchTerms f pty ty
+    (JTypesAreEqual pty1 pty2, JTypesAreEqual ty1 ty2) -> do
+        matchTerms f pty1 ty1
+        matchTerms f pty2 ty2
+    (JOfType ptm pty         , JOfType tm ty         ) -> do
+        matchTerms f ptm tm
+        matchTerms f pty ty
+    (JAreEqual ptm1 ptm2 pty , JAreEqual tm1 tm2 ty  ) -> do
+        matchTerms f ptm1 tm1
+        matchTerms f ptm2 tm2
+        matchTerms f pty ty
 
 
 -- |
