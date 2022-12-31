@@ -122,6 +122,7 @@ infer tm = case tm of
         x <- newName
         extendContext x dom
         let cod' = instantiate1 (Point $ Var x) cod
+        -- The codomain should always evaluate to a type.
         check cod' Star
     
     -- Check that @λ (x : A) -> e : Π (x : A) -> B x@.
@@ -142,12 +143,15 @@ infer tm = case tm of
 inferApp :: Monad m => Term -> [Term] -> TCMT m Type
 inferApp hd args = do
     fty <- infer hd
-    go fty (reverse args)
+    go fty args
   where
     go :: Monad m => Type -> [Term] -> TCMT m Type
     -- Is a pi-type and has arguments.
     go (Pi dom cod) (x:args) = do
-        xty <- check x dom
+        -- We don't actually care about the argument's type; just
+        -- that it's compatible with the function's domain.
+        _ <- check x dom
+        
         let cod' = instantiate1 x cod
         go cod' args
 

@@ -14,7 +14,7 @@ import qualified Data.Map as Map
 
 
 tcmTest :: TCM Type
-tcmTest = infer $ mkLam (Var 4) matrixTy $ App (Point $ Var 4) [integer, Point $ Lit $ IntLit 4, Point $ Lit $ IntLit 5]
+tcmTest = infer $ App matrix [Point $ Lit $ IntLit 7, Point $ Lit $ IntLit 7, double]
 
 main :: IO ()
 main = do

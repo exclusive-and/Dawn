@@ -58,7 +58,11 @@ matchTerms matchPoint pat tm = case (pat, tm) of
         matchTerms matchPoint pdom dom
         matchAbs matchPoint pe e
         
-    (App pf px    , App f x   ) -> matchFunApps matchPoint pf f px x
+    (App pf px    , App f x   ) -> do
+        -- Argument matching must be done outside-in.
+        let px' = reverse px
+            x'  = reverse x
+        matchFunApps matchPoint pf f px' x'
     
     (_            , _         ) ->
         MatchM $ throwE "Match terms failed!"
@@ -94,8 +98,8 @@ matchAbs f (Abs pm) (Abs m) = matchTerms f' pm m where
         goReallyFree (Subterm a) = return a
 
 -- |
--- Try to match two application stacks. Succeeds if all terms
--- in the first stack match against a term in the second stack.
+-- Try to match two application stacks. Succeeds if all terms in the
+-- first stack match against a term in the second stack.
 -- 
 matchFunApps
     :: (a -> Term' c -> MatchM ())

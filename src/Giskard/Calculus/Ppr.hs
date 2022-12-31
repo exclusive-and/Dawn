@@ -57,7 +57,7 @@ pprApp :: Int -> Term' Text -> [Term' Text] -> Text
 pprApp bindLvl f xs =
   let
     f'  = pprTerm' True bindLvl f
-    xs' = map (pprTerm' True bindLvl) $ reverse xs
+    xs' = map (pprTerm' True bindLvl) xs
   in
     f' <> " " <> Text.intercalate " " xs'
     
