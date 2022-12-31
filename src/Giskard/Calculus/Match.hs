@@ -15,9 +15,6 @@ import              Giskard.Names
 import              Control.Monad
 import              Control.Monad.State.Lazy
 import              Control.Monad.Trans.Except
-import              Data.IntSet (IntSet)
-import qualified    Data.IntSet as IntSet
-import              Data.Map (Map)
 import qualified    Data.Map as Map
 
 -----------------------------------------------------------
@@ -94,7 +91,7 @@ matchAbs f (Abs pm) (Abs m) = matchTerms f' pm m where
 
     checkReallyFree :: Term' (Point b (Term' c)) -> MatchM (Term' c)
     checkReallyFree = fmap join . traverse goReallyFree where
-        goReallyFree (Bound   b) = MatchM $ throwE "Expected FV, got BV"
+        goReallyFree (Bound   _) = MatchM $ throwE "Expected FV, got BV"
         goReallyFree (Subterm a) = return a
 
 -- |
@@ -116,7 +113,7 @@ matchFunApps matchPoint pf f (px:pxs) (x:xs) = do
 matchFunApps matchPoint pf f [] xs =
     matchTerms matchPoint pf (App f xs)
 
-matchFunApps matchPoint pf f _ [] =
+matchFunApps _ _ _ _ [] =
     MatchM $ throwE "Couldn't match application stacks"
         
 newMatchSub :: Name -> Term -> MatchM ()

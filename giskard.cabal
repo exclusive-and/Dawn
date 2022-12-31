@@ -72,8 +72,6 @@ Library
   Exposed-modules:    Main
                       Giskard.Calculus.Term
                       Giskard.Calculus.Match
-                      Giskard.Calculus.Contexts
-                      Giskard.Calculus.Deduction
                       Giskard.Calculus.Ppr
                       Giskard.Names
                       Giskard.Telepath.Types

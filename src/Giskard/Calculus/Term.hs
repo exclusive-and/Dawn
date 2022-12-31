@@ -242,7 +242,7 @@ whnf (App f (x:xs)) =
         f'       -> App f' (x:xs)
   where
     inst e = whnf $ App (instantiate1 x e) xs
-        
+
 whnf e = e
 
 -- |

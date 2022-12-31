@@ -12,18 +12,15 @@ import              Giskard.Calculus.Term hiding (Term, Type)
 import              Giskard.Calculus.Ppr
 import              Giskard.Names
 
-import              Control.Monad
 import              Control.Monad.State.Lazy
 import              Control.Monad.Trans.Except
 import              Data.Functor.Identity
 import              Data.Map (Map)
 import qualified    Data.Map as Map
 import              Data.Text (Text)
-import qualified    Data.Text as Text
 import              GHC.Int
 
 import              Numeric.LinearAlgebra (Matrix)
-import qualified    Numeric.LinearAlgebra as M
 
 
 -----------------------------------------------------------
@@ -161,6 +158,8 @@ infer tm = case tm of
     App f args -> inferApp f args
     
     Star -> throwTC $ OtherTCErr "Can't infer type of Star"
+    
+    Let{} -> throwTC $ OtherTCErr "Let currently unsupported"
 
 -- |
 -- Infer the type of an application.
@@ -172,20 +171,20 @@ inferApp hd args = do
   where
     go :: Monad m => Type -> [Term] -> TCMT m Type
     -- Is a pi-type and has arguments.
-    go (Pi dom cod) (x:args) = do
+    go (Pi dom cod) (x:xs) = do
         -- We don't actually care about the argument's type; just
         -- that it's compatible with the function's domain.
         _ <- check x dom
         
         let cod' = instantiate1 x cod
-        go cod' args
+        go cod' xs
 
     -- No more arguments to check.
     go ty [] = pure ty
     
     -- Not a pi-type, but there are still some arguments left.
-    go ty remaining = throwTC $ OtherTCErr $ "Expected pi-type, got "
-                                          <> ppr hd <> " : " <> ppr ty
+    go ty _ = throwTC $ 
+        OtherTCErr $ "Expected pi-type, got " <> ppr hd <> " : " <> ppr ty
     
 -- |
 -- Typecheck a term against an expected type.
