@@ -55,8 +55,13 @@ data Term' a
     | Lam   (Type' a) (Abs () Term' a)
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
     | Let   (Type' a) (Term' a) (Abs () Term' a)
-    -- | A term applied to a stack of arguments.
+    
+    -- |
+    -- A term applied to a stack of arguments.
+    -- 
+    -- Invariant: @App f (x:xs) == App (App f [x]) xs@
     | App   (Term' a) [Term' a]
+    
     -- | The top-level type of contexts and telescopes.
     | Star
     deriving (Functor, Foldable, Traversable)
