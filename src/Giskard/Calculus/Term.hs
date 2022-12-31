@@ -16,6 +16,7 @@ module Giskard.Calculus.Term
     , abstract1, instantiate1
     , mkPi, mkLam
     , whnf
+    , stripApps
     , SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
@@ -197,6 +198,7 @@ instance Functor (Point b) where fmap = fmapDefault
 instance Foldable (Point b) where
     foldMap = foldMapDefault
 
+
 -----------------------------------------------------------
 -- Convenient Term API
 -----------------------------------------------------------
@@ -242,6 +244,14 @@ whnf (App f (x:xs)) =
     inst e = whnf $ App (instantiate1 x e) xs
         
 whnf e = e
+
+-- |
+-- Strip any applications off the head of a term.
+-- 
+stripApps :: Term' a -> (Term' a, [Term' a])
+stripApps = \case
+    App f xs -> (f, xs)
+    e        -> (e, [])
 
 
 -----------------------------------------------------------
