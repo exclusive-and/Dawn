@@ -10,6 +10,7 @@ import Giskard.Telepath.Ops
 
 import Control.Monad.State.Lazy
 import Control.Monad.Trans.Except
+import Data.Functor.Identity
 import qualified Data.Map as Map
 
 import Numeric.LinearAlgebra ((><))
@@ -30,33 +31,33 @@ runTcmTest :: IO ()
 runTcmTest = do
     let (r, _) = runTC tcmTest (TCState (reallyPrimTys `Map.union` primOpTys) 30)
     case r of
-        Left err -> print err
+        Left err -> print $ ppr err
         Right ty -> print $ ppr ty
 
-telepathTest :: Telepath Node
+telepathTest :: Monad m => TelepathT m Node
 telepathTest = do
-    x <- placeholder 3 4 double
-    y <- placeholder 4 3 double
+    x <- placeholder 7 4 double
+    y <- placeholder 4 9 double
     matmul x y
 
 runTelepathTest :: IO ()
 runTelepathTest = do
     let s = TelepathState Map.empty primOpTmMap 0
-        (r, _) = runTelepath telepathTest s
+        (r, _) = runIdentity $ runTelepathT telepathTest s
     case r of
         Left err   -> print err
         Right node -> print node
     
-telepathTCMTest :: TCMT Telepath Type
-telepathTCMTest = inferNode =<< lift telepathTest
+telepathTCMTest :: TelepathT TCM Type
+telepathTCMTest = inferNode =<< telepathTest
 
 runTelepathTCMTest :: IO ()
 runTelepathTCMTest = do
     let tcs = TCState (reallyPrimTys `Map.union` primOpTys) 30
         tls = TelepathState Map.empty primOpTmMap 0
-        (r1, _) = runTelepath (runTCMT telepathTCMTest tcs) tls
+        (r1, _) = runTC (runTelepathT telepathTCMTest tls) tcs
     case r1 of
-        Left err -> print err
+        Left err -> print $ ppr err
         Right (r2, _) ->
             case r2 of
                 Left err -> print err
@@ -64,4 +65,4 @@ runTelepathTCMTest = do
 
 main :: IO ()
 main = do
-    runTelepathTest
+    runTcmTest

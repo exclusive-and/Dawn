@@ -11,10 +11,11 @@ module Giskard.Telepath.Graph where
 import              Giskard.Calculus.Term (Term' (..))
 import              Giskard.Calculus.Ppr
 import              Giskard.Names
-import              Giskard.Telepath.Types (Term, Type, P (..), Literal, TCMT (..), infer)
+import              Giskard.Telepath.Types (Term, Type, P (..), Literal, TCMT (..), TCM, infer)
 
 import              Control.Monad
 import              Control.Monad.State.Lazy
+import              Control.Monad.Trans.Class
 import              Control.Monad.Trans.Except
 import              Data.Functor.Identity
 import              Data.Map (Map)
@@ -51,6 +52,8 @@ instance Show Node where
     
 type OpName = Text
 
+type TermComputer = [Term] -> [Term] -> TCM Term
+
 type GradientT m = [Node] -> Node -> TelepathT m [Node]
 
 type Gradient = GradientT Identity
@@ -62,7 +65,7 @@ type Gradient = GradientT Identity
 
 data TelepathState = TelepathState
     { nodeMap       :: Map Name Node
-    , opTmMap       :: Map OpName Term
+    , opTmMap       :: Map OpName TermComputer
     , nameSupply    :: Name
     }
     
@@ -70,11 +73,14 @@ data TelepathState = TelepathState
 -- Telepath session monad transformer.
 -- 
 newtype TelepathT m a = Telepath
-    { runTelepathT :: ExceptT Text (StateT TelepathState m) a }
+    { unTelepath :: ExceptT Text (StateT TelepathState m) a }
     deriving ( Functor, Applicative, Monad
              , MonadState TelepathState
              )
 
+instance MonadTrans TelepathT where
+    lift = Telepath . lift . lift
+             
 -- |
 -- Telepath session with no underlying monad.
 -- 
@@ -87,13 +93,23 @@ throwTelepath :: Monad m => Text -> TelepathT m a
 throwTelepath = Telepath . throwE
 
 -- |
+-- 
+--
+runTelepathT
+    :: Monad m
+    => TelepathT m a
+    -> TelepathState
+    -> m (Either Text a, TelepathState)
+runTelepathT tp = runStateT (runExceptT $ unTelepath tp)
+
+-- |
 -- Run a Telepath session without an underlying monad.
 -- 
 runTelepath
     :: Telepath a
     -> TelepathState
     -> (Either Text a, TelepathState)
-runTelepath tp = runState (runExceptT $ runTelepathT tp)
+runTelepath tp = runState (runExceptT $ unTelepath tp)
 
 -- |
 -- Telepath session with support for IO actions.
@@ -107,7 +123,7 @@ runTelepathIO
     :: TelepathIO a
     -> TelepathState
     -> IO (Either Text a, TelepathState)
-runTelepathIO tp = runStateT (runExceptT $ runTelepathT tp)
+runTelepathIO tp = runStateT (runExceptT $ unTelepath tp)
 
 instance Monad m => NameMonad (TelepathT m) where
     newName = do
@@ -151,17 +167,17 @@ getNode nm = do
 -- |
 -- Get the term corresponding to an Op in a Telepath context.
 -- 
-getOpTm :: Monad m => OpName -> TelepathT m Term
+getOpTm :: OpName -> TelepathT TCM TermComputer
 getOpTm opName = do
-    opTms <- opTmMap <$> get
-    case Map.lookup opName opTms of
-        Just tm -> pure tm
-        Nothing -> throwTelepath $ "Couldn't find term for " <> opName
+    opTmComps <- opTmMap <$> get
+    case Map.lookup opName opTmComps of
+        Just tmComp -> pure tmComp
+        Nothing     -> throwTelepath $ "Couldn't find term for " <> opName
 
 -- |
 -- Compute the term corresponding to a node in a Telepath graph.
 --
-computeNodeTm :: Monad m => Node -> TelepathT m Term
+computeNodeTm :: Node -> TelepathT TCM Term
 computeNodeTm node = do
     let inputs = nodeInputs node
     inputNodes <- mapM getNode inputs
@@ -171,14 +187,14 @@ computeNodeTm node = do
     inputTms <- mapM computeNodeTm inputNodes
     
     -- Lookup the term corresponding to this node's Op.
-    opTm <- getOpTm $ nodeOp node 
-    pure $ App opTm $ valueTms ++ inputTms
+    opTmComp <- getOpTm $ nodeOp node
+    lift $ opTmComp valueTms inputTms
 
 -- |
 -- Infer the type of a node in a Telepath graph.
 -- 
-inferNode :: Monad m => Node -> TCMT (TelepathT m) Type
+inferNode :: Node -> TelepathT TCM Type
 inferNode node = do
-    nodeTm <- lift $ computeNodeTm node
-    infer nodeTm
+    nodeTm <- computeNodeTm node
+    lift $ infer nodeTm
     
