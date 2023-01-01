@@ -9,8 +9,9 @@
 module Giskard.Telepath.Types where
 
 import              Giskard.Calculus.Term hiding (Term, Type)
-import              Giskard.Calculus.Ppr
+import              Giskard.Calculus.Pretty.Term
 import              Giskard.Names
+import              Giskard.Pretty
 
 import              Control.Monad.State.Lazy
 import              Control.Monad.Trans.Except

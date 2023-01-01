@@ -9,8 +9,9 @@
 module Giskard.Telepath.Graph where
 
 import              Giskard.Calculus.Term (Term' (..))
-import              Giskard.Calculus.Ppr
+import              Giskard.Calculus.Pretty.Term
 import              Giskard.Names
+import              Giskard.Pretty
 import              Giskard.Telepath.Types (Term, Type, P (..), Literal, TCMT (..), TCM, infer)
 
 import              Control.Monad

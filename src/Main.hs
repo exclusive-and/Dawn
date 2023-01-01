@@ -2,11 +2,13 @@
 module Main where
 
 import Giskard.Calculus.Term hiding (Term, Type)
-import Giskard.Calculus.Ppr
+import Giskard.Calculus.Pretty.Term
 
 import Giskard.Telepath.Types
 import Giskard.Telepath.Graph
 import Giskard.Telepath.Ops
+
+import Giskard.Pretty
 
 import Control.Monad.State.Lazy
 import Control.Monad.Trans.Except

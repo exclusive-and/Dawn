@@ -4,16 +4,14 @@
 -- Module       : Giskard.Calculus.Ppr
 -- Description  : Pretty-printing for Calculus IR
 -----------------------------------------------------------
-module Giskard.Calculus.Ppr where
+module Giskard.Calculus.Pretty.Term where
 
 import              Giskard.Calculus.Term
+import              Giskard.Pretty
 
 import              Data.Text (Text, pack)
 import qualified    Data.Text as Text
 
-
-class Ppr a where
-    ppr :: a -> Text
 
 pprBound :: Int -> Text
 pprBound boundId = "_bound_" <> pack (show boundId)

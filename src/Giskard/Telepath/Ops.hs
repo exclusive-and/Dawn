@@ -7,8 +7,9 @@
 module Giskard.Telepath.Ops where
 
 import              Giskard.Calculus.Term (Term' (..), mkPi, stripApps)
-import              Giskard.Calculus.Ppr
+import              Giskard.Calculus.Pretty.Term
 import              Giskard.Names
+import              Giskard.Pretty
 import              Giskard.Telepath.Types
 import              Giskard.Telepath.Graph
 
