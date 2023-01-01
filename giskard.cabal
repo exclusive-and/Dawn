@@ -75,8 +75,8 @@ Library
                       Giskard.Calculus.Ppr
                       Giskard.Names
                       Giskard.Telepath.Types
-                      -- Giskard.Telepath.Graph
-                      -- Giskard.Telepath.Ops
+                      Giskard.Telepath.Graph
+                      Giskard.Telepath.Ops
                       -- Giskard.Telepath.Autograd
                       -- Giskard.Telepath.Engine
 
