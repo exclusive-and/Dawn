@@ -69,8 +69,8 @@ pprTerm' shouldParen bindLvl tm = case tm of
   where
     parens s = if shouldParen then "(" <> s <> ")" else s
 
-pprTerm :: Show a => Term' a -> Text
-pprTerm = pprTerm' False 0 . (pure . pack . show =<<)
+pprTerm :: Ppr a => Term' a -> Text
+pprTerm = pprTerm' False 0 . (pure . ppr =<<)
 
-instance Show a => Ppr (Term' a) where ppr = pprTerm
+instance Ppr a => Ppr (Term' a) where ppr = pprTerm
         

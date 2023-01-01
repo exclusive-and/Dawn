@@ -40,10 +40,10 @@ instance Eq P where
     Lit lit1  == Lit lit2  = lit1 == lit2
     _         == _         = False
 
-instance Show P where
-    show (Var _ (Just nm)) = unpack nm
-    show (Var nm _       ) = "_x_" ++ show nm
-    show (Lit lit        ) = show lit
+instance Ppr P where
+    ppr (Var _ (Just nm)) = nm
+    ppr (Var nm _       ) = pack $ "_x_" ++ show nm
+    ppr (Lit lit        ) = ppr lit
 
 instance SynEq P where synEq = (==)
 
@@ -54,11 +54,11 @@ data Literal
     | MatDoubleLit  Int Int (Matrix Double)
     deriving Eq
     
-instance Show Literal where
-    show (IntLit x          ) = show x
-    show (MatIntLit _ _ x   ) = show x
-    show (DoubleLit x       ) = show x
-    show (MatDoubleLit _ _ x) = show x
+instance Ppr Literal where
+    ppr (IntLit x          ) = pack $ show x
+    ppr (MatIntLit _ _ x   ) = pack $ show x
+    ppr (DoubleLit x       ) = pack $ show x
+    ppr (MatDoubleLit _ _ x) = pack $ show x
     
 -- |
 -- Create a variable point.
@@ -90,14 +90,14 @@ data TCException
     | NotInScope    Name        -- ^ Couldn't find a variable in the context.
     | OtherTCErr    Text        -- ^ Generic exception with message.
 
-instance Show TCException where
-    show (Mismatch ty1 ty2) =
-        unpack $ "Mismatch between " <> ppr ty1 <> " and " <> ppr ty2
+instance Ppr TCException where
+    ppr (Mismatch ty1 ty2) =
+        "Mismatch between " <> ppr ty1 <> " and " <> ppr ty2
         
-    show (NotInScope nm) =
-        unpack $ "Variable " <> pack (show nm) <> " not in scope"
+    ppr (NotInScope nm) =
+        "Variable " <> pack (show nm) <> " not in scope"
     
-    show (OtherTCErr err) = unpack err
+    ppr (OtherTCErr err) = err
     
 data TCState = TCState
     { termTyMap     :: Map Name Term
@@ -114,9 +114,7 @@ newtype TCMT m a = TCM
              , MonadState TCState )
 
 instance MonadTrans TCMT where
-    lift m = TCM . ExceptT $ StateT $ \ s -> do
-        a <- m
-        pure (Right a, s)
+    lift = TCM . lift . lift
 
 -- |
 -- Throw a typechecking exception.
