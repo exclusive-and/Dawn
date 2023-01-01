@@ -7,11 +7,10 @@
 module Giskard.Calculus.Term
     ( Term' (..), Type'
     , bindTerm
-    , Abs (..)
+    , Abs (..), Point (..)
     , abstract, instantiate
     , AbsLike (..)
     , bindAbsSubterms
-    , Point (..)
     , Term, Type
     , abstract1, instantiate1
     , mkPi, mkLam
@@ -109,6 +108,11 @@ instance Applicative Term' where
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
 
 -- |
+-- A thing that is either a binder or a subterm.
+-- 
+data Point b a = Bound b | Subterm a
+
+-- |
 -- Abstract a term using the type rule in 'Abs'. Applies a test
 -- function to each point, and replaces the point with the appropriate
 -- binder when applicable.
@@ -178,15 +182,7 @@ instance Monad f => Applicative (Abs b f) where
 instance Foldable f => Foldable (Abs b f) where
     foldMap f (Abs m) = foldMap (foldMap $ foldMap f) m
 
-
------------------------------------------------------------
--- Bound and Free Subterms
------------------------------------------------------------
-    
--- |
--- A thing that is either a binder or a subterm.
--- 
-data Point b a = Bound b | Subterm a
+-- Miscellaneous 'Point' instances.
 
 instance Traversable (Point b) where
     traverse f p = case p of
