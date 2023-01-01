@@ -17,7 +17,7 @@ import              Control.Monad.Trans.Except
 import              Data.Functor.Identity
 import              Data.Map (Map)
 import qualified    Data.Map as Map
-import              Data.Text (Text)
+import              Data.Text (Text, pack, unpack)
 import              GHC.Int
 
 import              Numeric.LinearAlgebra (Matrix)
@@ -33,8 +33,17 @@ type Type = Term
 -- |
 -- Points can be variable names or literals.
 -- 
-data P = Var Name | Lit Literal
-    deriving (Eq, Show)
+data P = Var Name (Maybe Text) | Lit Literal
+
+instance Eq P where
+    Var nm1 _ == Var nm2 _ = nm1 == nm2
+    Lit lit1  == Lit lit2  = lit1 == lit2
+    _         == _         = False
+
+instance Show P where
+    show (Var _ (Just nm)) = unpack nm
+    show (Var nm _       ) = "_x_" ++ show nm
+    show (Lit lit        ) = show lit
 
 instance SynEq P where synEq = (==)
 
@@ -43,14 +52,26 @@ data Literal
     | MatIntLit     Int Int (Matrix Int64)
     | DoubleLit     Double
     | MatDoubleLit  Int Int (Matrix Double)
-    deriving (Eq, Show)
-
+    deriving Eq
+    
+instance Show Literal where
+    show (IntLit x          ) = show x
+    show (MatIntLit _ _ x   ) = show x
+    show (DoubleLit x       ) = show x
+    show (MatDoubleLit _ _ x) = show x
+    
 -- |
 -- Create a variable point.
 --
 var :: Name -> Term
-var = Point . Var
-    
+var = Point . varP
+
+-- |
+-- Create a var P.
+-- 
+varP :: Name -> P
+varP nm = Var nm Nothing
+
 -- |
 -- Create an integer literal point.
 --
@@ -69,6 +90,15 @@ data TCException
     | NotInScope    Name        -- ^ Couldn't find a variable in the context.
     | OtherTCErr    Text        -- ^ Generic exception with message.
 
+instance Show TCException where
+    show (Mismatch ty1 ty2) =
+        unpack $ "Mismatch between " <> ppr ty1 <> " and " <> ppr ty2
+        
+    show (NotInScope nm) =
+        unpack $ "Variable " <> pack (show nm) <> " not in scope"
+    
+    show (OtherTCErr err) = unpack err
+    
 data TCState = TCState
     { termTyMap     :: Map Name Term
     , nameSupply    :: Name
@@ -79,16 +109,21 @@ data TCState = TCState
 -- being typechecked.
 -- 
 newtype TCMT m a = TCM
-    { runTC :: ExceptT TCException (StateT TCState m) a }
+    { unTC :: ExceptT TCException (StateT TCState m) a }
     deriving ( Functor, Applicative, Monad
              , MonadState TCState )
+
+instance MonadTrans TCMT where
+    lift m = TCM . ExceptT $ StateT $ \ s -> do
+        a <- m
+        pure (Right a, s)
 
 -- |
 -- Throw a typechecking exception.
 -- 
 throwTC :: Monad m => TCException -> TCMT m a
 throwTC = TCM . throwE
-    
+
 instance Monad m => NameMonad (TCMT m) where
     newName = do
         i <- nameSupply <$> get
@@ -96,6 +131,18 @@ instance Monad m => NameMonad (TCMT m) where
         pure i
 
 type TCM = TCMT Identity
+
+-- |
+-- Run a typechecker monad transformer.
+-- 
+runTCMT :: Monad m => TCMT m a -> TCState -> m (Either TCException a, TCState)
+runTCMT tcm = runStateT (runExceptT $ unTC tcm)
+
+-- |
+-- Run a typechecker monad.
+--
+runTC :: TCM a -> TCState -> (Either TCException a, TCState)
+runTC tcm = runState (runExceptT $ unTC tcm)
 
 -- |
 -- Extend a context by tracking a free variable's type.
@@ -127,23 +174,23 @@ getLitType :: Monad m => Literal -> TCMT m Type
 getLitType x =
     pure $ case x of
         IntLit _            -> integer
-        MatIntLit m n _     -> App matrix [intLit m, intLit n, integer]
+        MatIntLit m n _     -> App matrixTyCon [intLit m, intLit n, integer]
         DoubleLit _         -> double
-        MatDoubleLit m n _  -> App matrix [intLit m, intLit n, double]
+        MatDoubleLit m n _  -> App matrixTyCon [intLit m, intLit n, double]
         
 -- |
 -- Infer the type of a term.
 -- 
 infer :: Monad m => Term -> TCMT m Type
 infer tm = case tm of
-    Point (Var x) -> getVarType x
-    Point (Lit x) -> getLitType x
+    Point (Var x _) -> getVarType x
+    Point (Lit x  ) -> getLitType x
     
     -- Check that @Π (x : A) -> B x : ★@.
     Pi dom cod -> do
         x <- newName
         extendContext x dom
-        let cod' = instantiate1 (Point $ Var x) cod
+        let cod' = instantiate1 (var x) cod
         -- The codomain should always evaluate to a type.
         check cod' Star
     
@@ -151,8 +198,8 @@ infer tm = case tm of
     Lam dom e -> do
         x <- newName
         extendContext x dom
-        let e' = instantiate1 (Point $ Var x) e
-        mkPi (Var x) dom <$> infer e'
+        let e' = instantiate1 (var x) e
+        mkPi (varP x) dom <$> infer e'
     
     -- Check that @(f : A -> B) (x : A) : B@
     App f args -> inferApp f args
@@ -201,85 +248,62 @@ check tm expected = do
 -- Builtins
 -----------------------------------------------------------
        
-star, integer, double, matrix :: Term
+star, integer, double :: Type
 star     = Star
-integer  = var 1
-double   = var 2
-matrix   = var 3
+integer  = Point $ Var 1 $ Just "integer"
+double   = Point $ Var 2 $ Just "double"
 
-integerTy, doubleTy, matrixTy :: Term
-integerTy = star
-doubleTy  = star
-matrixTy  = mkPi (Var 10) integer
-          $ mkPi (Var 11) integer
-          $ mkPi (Var 12) star $ star
+integerKind, doubleKind :: Type
+integerKind = star
+doubleKind  = star
 
+-- |
+-- Matrix type constructor kind.
+-- 
+matrixTyConKind :: Type
+matrixTyConKind
+    = mkPi (varP 10) integer $ mkPi (varP 11) integer
+    $ mkPi (varP 12) star $ star
+
+-- |
+-- Matrix type constructor.
+--
+matrixTyCon :: Type
+matrixTyCon = Point $ Var 3 $ Just "matrix"
+    
 -- |
 -- Matrix constructor type.
 -- 
-mkMatrixTy :: Term
-mkMatrixTy = mkPi (Var 10) integer
-           $ mkPi (Var 11) integer
-           $ mkPi (Var 12) star
-           $ App matrix [var 10, var 11, var 12]
+matrixTy :: Type
+matrixTy
+    = mkPi (varP 10) integer $ mkPi (varP 11) integer
+    $ mkPi (varP 12) star
+    $ App matrixTyCon [var 10, var 11, var 12]
 
 -- |
 -- Matrix constructor.
 -- 
-mkMatrix :: Term
-mkMatrix = var 4
+matrix :: Term
+matrix = Point $ Var 4 $ Just "matrix"
 
--- |
--- Type of matrix multiplication: 
--- (m k n : Nat) -> (t : Type) -> Mat m k t -> Mat k n t -> Mat m n t
-matmulTy :: Type
-matmulTy =
-  let
-    -- a := Mat m k t
-    aty = App matrix [var 10, var 11, var 13]
-    -- b := Mat k n t
-    bty = App matrix [var 11, var 12, var 13]
-    -- c := Mat m n t
-    cty = App matrix [var 10, var 12, var 13]
-    
-    -- h := Mat m k t -> Mat k n t -> Mat m n t
-    hty = mkPi (Var 14) aty $ mkPi (Var 15) bty $ cty
-    
-    -- g := (t : Type) -> h
-    gty = mkPi (Var 13) star hty
-    
-    -- f := (m k n : Nat) -> g
-    --   == (m k n : Nat) -> Mat m k t -> Mat k n t -> Mat m n t
-    fty = mkPi (Var 10) integer
-        $ mkPi (Var 11) integer
-        $ mkPi (Var 12) integer $ gty
-  in
-    fty
-
--- |
--- Matrix multiplication.
--- 
-matmul :: Term
-matmul = var 5
-    
 
 -- |
 -- Important constants:
 --
 --  (0) Type
---  (1) Int      : Type
---  (2) Double   : Type
---  (3) Matrix   : Int -> Int -> Type -> Type
---  (4) MkMatrix : (m n : Int) -> (t : Type) -> Matrix m n t
---  (5) Matmul   : (m k n : Int) -> (t : Type)
---              -> Matrix m k t -> Matrix k n t -> Matrix m n t
+--  (1) Int         : Type
+--  (2) Double      : Type
+--  (3) MatrixTyCon : Int -> Int -> Type -> Type
+--  (4) Matrix      : (m n : Int) -> (t : Type) -> MatrixTyCon m n t
+--  
+-- We'll use these constants and their types for building and
+-- typechecking everything else.
 -- 
-constants :: Map Name Term
-constants = Map.fromList
-    [ (1, integerTy )
-    , (2, doubleTy  )
-    , (3, matrixTy  )
-    , (4, mkMatrixTy)
-    , (5, matmulTy  )
+reallyPrimTys :: Map Name Term
+reallyPrimTys = Map.fromList
+    [ (1, integerKind       )
+    , (2, doubleKind        )
+    , (3, matrixTyConKind   )
+    , (4, matrixTy          )
     ]
     
