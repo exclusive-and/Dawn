@@ -11,7 +11,6 @@ module Giskard.Calculus.Term
     , abstract, instantiate
     , AbsLike (..)
     , bindAbsSubterms
-    , Term, Type
     , abstract1, instantiate1
     , mkPi, mkLam
     , whnf
@@ -198,9 +197,6 @@ instance Foldable (Point b) where
 -----------------------------------------------------------
 -- Convenient Term API
 -----------------------------------------------------------
-
-type Term = Term' Name
-type Type = Term
 
 -- |
 -- Abstract a term over a single point (using 'Eq', not 'SynEq').
