@@ -12,13 +12,13 @@ module Giskard.Calculus.Term
     , AbsLike (..)
     , bindAbsSubterms
     , abstract1, instantiate1
-    , mkPi, mkLam
+    , mkPi, mkForall, mkLam
     , whnf
     , stripApps
     , SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
-    , Subst
+    , Subst'
     , applySubst
     ) where
 
@@ -46,15 +46,26 @@ data Term' a
     -- A thing that we think is atomic in this term. Might be
     -- a variable or binder, but can also be a subterm during
     -- substitutions.
-    = Point a
+    = Point  a
     
     -- | A pi-type abstracts over a term in a type.
-    | Pi    (Type' a) (Abs () Type' a)
+    | Pi     (Type' a) (Abs () Type' a)
     -- | Normal lambda abstraction over a term in a term.
-    | Lam   (Type' a) (Abs () Term' a)
+    | Lam    (Type' a) (Abs () Term' a)
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let   (Type' a) (Term' a) (Abs () Term' a)
+    | Let    (Type' a) (Term' a) (Abs () Term' a)
     
+    -- |
+    -- 'Forall' terms work identically to 'Pi' terms from the
+    -- perspective of the term calculus, but signal to constraint
+    -- solvers that they must be solved rather than expecting an
+    -- argument there.
+    --
+    -- Use 'Forall' to model:
+    --  * System F type parameters.
+    --  * Agda/Idris implicit parameters.
+    | Forall (Type' a) (Abs () Type' a)
+
     -- |
     -- A term applied to a stack of arguments.
     -- 
@@ -73,12 +84,13 @@ type Type' = Term'
 -- 
 bindTerm :: Term' a -> (a -> Term' c) -> Term' c
 bindTerm t s = case t of
-    Point a       -> s a
-    Pi    dom cod -> Pi  (dom >>= s) (cod >>>= s)
-    Lam   dom e   -> Lam (dom >>= s) (e   >>>= s)
-    Let   ty u e  -> Let (ty  >>= s) (u >>= s) (e >>>= s)
-    App   f e     -> App (f   >>= s) (map (>>= s) e)
-    Star          -> Star
+    Point  a       -> s a
+    Pi     dom cod -> Pi     (dom >>= s) (cod >>>= s)
+    Lam    dom e   -> Lam    (dom >>= s) (e   >>>= s)
+    Let    ty u e  -> Let    (ty  >>= s) (u >>= s) (e >>>= s)
+    Forall dom cod -> Forall (dom >>= s) (cod >>>= s)
+    App    f e     -> App    (f   >>= s) (map (>>= s) e)
+    Star           -> Star
 
 instance Monad Term' where (>>=) = bindTerm
 
@@ -217,6 +229,12 @@ mkPi :: Eq a => a -> Type' a -> Type' a -> Type' a
 mkPi nm dom cod = Pi dom $ abstract1 nm cod
 
 -- |
+-- Make a forall-type from a type by abstracting over a name.
+--
+mkForall :: Eq a => a -> Type' a -> Type' a -> Type' a
+mkForall nm dom cod = Forall dom $ abstract1 nm cod
+
+-- |
 -- Make a lambda-term from a term by abstracting over a name.
 -- 
 mkLam :: Eq a => a -> Type' a -> Term' a -> Term' a
@@ -229,9 +247,10 @@ whnf :: Term' a -> Term' a
 
 whnf (App f (x:xs)) =
     case f of
-        Pi _ cod -> inst cod
-        Lam _ e  -> inst e
-        f'       -> App f' (x:xs)
+        Pi _ cod        -> inst cod
+        Lam _ e         -> inst e
+        Forall _ cod    -> inst cod
+        f'              -> App f' (x:xs)
   where
     inst e = whnf $ App (instantiate1 x e) xs
 
@@ -266,17 +285,19 @@ instance SynEq Name where synEq = (==)
 -- 
 synEqTerms :: SynEq a => Term' a -> Term' a -> Bool
 synEqTerms t1 t2 = case (t1, t2) of
-    (Point tm1    , Point tm2    ) -> synEq tm1 tm2
-    (Pi dom1 cod1 , Pi dom2 cod2 )
+    (Point tm1       , Point tm2       ) -> synEq tm1 tm2
+    (Pi dom1 cod1    , Pi dom2 cod2    )
         -> synEq dom1 dom2 && synEq cod1 cod2
-    (Lam dom1 tm1 , Lam dom2 tm2 )
+    (Lam dom1 tm1    , Lam dom2 tm2    )
         -> synEq dom1 dom2 && synEq tm1 tm2
-    (Let ty1 u1 e1, Let ty2 u2 e2)
+    (Let ty1 u1 e1   , Let ty2 u2 e2   )
         -> synEq ty1 ty2 && synEq u1 u2 && synEq e1 e2
-    (App f1 x1    , App f2 x2    )
+    (Forall dom1 cod1, Forall dom2 cod2)
+        -> synEq dom1 dom2 && synEq cod1 cod2
+    (App f1 x1       , App f2 x2       )
         -> synEq f1 f2 && synEq x1 x2
-    (Star         , Star         ) -> True
-    (_            , _            ) -> False
+    (Star            , Star            ) -> True
+    (_               , _               ) -> False
 
 instance SynEq a => SynEq (Term' a) where
     synEq = synEqTerms
@@ -318,7 +339,7 @@ instance (SynEq b, SynEq a) => SynEq (Point b a) where
 -- Simple Pattern Unification of Terms
 -----------------------------------------------------------
 
-type Subst a = Map a (Term' a)
+type Subst' a = Map a (Term' a)
 
 -- |
 -- Apply a substitution map to a term.
@@ -327,7 +348,7 @@ type Subst a = Map a (Term' a)
 -- map. Replace each point found in the map by its corresponding term.
 -- Otherwise, if we don't find a point, do nothing to it.
 -- 
-applySubst :: Ord a => Term' a -> Subst a -> Term' a
+applySubst :: Ord a => Term' a -> Subst' a -> Term' a
 applySubst tm subst = do
     a <- tm
     case Map.lookup a subst of
