@@ -52,6 +52,7 @@ data Term' a
     | Pi     (Type' a) (Abs () Type' a)
     -- | Normal lambda abstraction over a term in a term.
     | Lam    (Type' a) (Abs () Term' a)
+
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
     | Let    (Type' a) (Term' a) (Abs () Term' a)
     
