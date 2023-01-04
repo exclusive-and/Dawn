@@ -75,9 +75,11 @@ data Term' a
     
     -- | The top-level type of contexts and telescopes.
     | Star
+
     deriving (Functor, Foldable, Traversable)
 
 type Type' = Term'
+
 
 instance Applicative Term' where
     pure  = Point
@@ -269,6 +271,8 @@ whnf (App f (x:xs)) =
         f'              -> App f' (x:xs)
   where
     inst e = whnf $ App (instantiate1 x e) xs
+
+whnf (Let _ u e) = instantiate1 u e
 
 whnf e = e
 
