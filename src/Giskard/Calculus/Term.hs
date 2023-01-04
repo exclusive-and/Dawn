@@ -53,9 +53,6 @@ data Term' a
     -- | Normal lambda abstraction over a term in a term.
     | Lam    (Type' a) (Abs () Term' a)
 
-    -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let    (Type' a) (Term' a) (Abs () Term' a)
-    
     -- |
     -- 'Forall' terms work identically to 'Pi' terms from the
     -- perspective of the term calculus, but signal to constraint
@@ -66,6 +63,9 @@ data Term' a
     --  * System F type parameters.
     --  * Agda/Idris implicit parameters.
     | Forall (Type' a) (Abs () Type' a)
+
+    -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
+    | Let    (Type' a) (Term' a) (Abs () Term' a)
 
     -- |
     -- A term applied to a stack of arguments.
@@ -79,25 +79,40 @@ data Term' a
 
 type Type' = Term'
 
--- |
--- Recurse over a term to apply a function which substitutes points for
--- new subterms.
--- 
-bindTerm :: Term' a -> (a -> Term' c) -> Term' c
-bindTerm t s = case t of
-    Point  a       -> s a
-    Pi     dom cod -> Pi     (dom >>= s) (cod >>>= s)
-    Lam    dom e   -> Lam    (dom >>= s) (e   >>>= s)
-    Let    ty u e  -> Let    (ty  >>= s) (u >>= s) (e >>>= s)
-    Forall dom cod -> Forall (dom >>= s) (cod >>>= s)
-    App    f e     -> App    (f   >>= s) (map (>>= s) e)
-    Star           -> Star
-
-instance Monad Term' where (>>=) = bindTerm
-
 instance Applicative Term' where
     pure  = Point
     (<*>) = ap
+
+-- |
+-- Recurse over a term to apply a function which substitutes points
+-- with new subterms.
+-- 
+bindTerm :: Term' a -> (a -> Term' c) -> Term' c
+bindTerm t s = case t of
+    -- Points: replace a point with the term it corresponds to in
+    -- the substitution function.
+    Point  a       -> s a
+
+    -- Abstractions: apply the substitution to the domain normally,
+    -- then go under abstraction to apply the substitution to free
+    -- subterms.
+    Pi     dom cod -> Pi     (dom >>= s) (cod >>>= s)
+    Lam    dom e   -> Lam    (dom >>= s) (e   >>>= s)
+    Forall dom cod -> Forall (dom >>= s) (cod >>>= s)
+
+    -- Let: as in the other abstraction terms, but also apply the
+    -- substitution to the saved term.
+    Let    ty u e  -> Let    (ty  >>= s) (u >>= s) (e >>>= s)
+
+    -- Application: apply the substitution piece-wise on the function
+    -- and on each of its arguments.
+    App    f e     -> App    (f   >>= s) (map (>>= s) e)
+
+    -- Star: since it isn't a normal point, Star should never be
+    -- substituted for anything else.
+    Star           -> Star
+
+instance Monad Term' where (>>=) = bindTerm
 
 
 -----------------------------------------------------------
