@@ -71,6 +71,7 @@ Library
 
   Exposed-modules:    Main
                       Giskard.Calculus.Term
+                      Giskard.Calculus.SynEq
                       Giskard.Calculus.Match
                       Giskard.Calculus.Pretty.Term
                       Giskard.Names
