@@ -33,8 +33,8 @@ import              Data.Traversable
 -----------------------------------------------------------
 
 -- |
--- Terms are free monads; extended to support abstraction over typed
--- variables, abstractions of types (pi-types), and let-binders.
+-- Terms are free monads. Extended with constructors for types,
+-- and type-annotated domains in abstractions for type inference.
 -- 
 -- See [the bound package](https://hackage.haskell.org/package/bound)
 -- for the original implementation of this idea.
@@ -42,20 +42,20 @@ import              Data.Traversable
 data Term' a
     -- |
     -- A thing that we think is atomic in this term. Might be
-    -- a variable or binder, but can also be an entire free subterm if
-    -- the term is abstracted.
+    -- a variable or binder, but can also be an entire free subterm
+    -- if the term is abstracted.
     = Point  a
     
-    -- | A pi-type abstracts over a term in a type.
-    | Pi     (Type' a) (Abs () Type' a)
-    -- | Normal lambda abstraction over a term in a term.
+    -- | λ-abstractions. Abstracts over a term in a term.
     | Lam    (Type' a) (Abs () Term' a)
+    
+    -- | Types of λ-abstractions. Abstracts over a term in a type.
+    | Pi     (Type' a) (Abs () Type' a)
 
     -- |
-    -- 'Forall' terms work identically to 'Pi' terms from the
-    -- perspective of the term calculus, but signal to constraint
-    -- solvers that they must be solved rather than expecting an
-    -- argument there.
+    -- 'Forall' types are a lot-like 'Pi' types. But instead of
+    -- instantiating the codomain with a visible argument, we depend
+    -- on the inference engine to deduce which terms should be used.
     --
     -- Use 'Forall' to model:
     --  * System F type parameters.
@@ -88,29 +88,30 @@ instance Applicative Term' where
 -- with new subterms.
 -- 
 bindTerm :: Term' a -> (a -> Term' c) -> Term' c
-bindTerm t s = case t of
-    -- Points: replace a point with the term it corresponds to in
-    -- the substitution function.
-    Point  a       -> s a
+bindTerm t0 s = go t0 where
+    go t = case t of
+        -- Points: replace a point with the term it corresponds to in
+        -- the substitution function.
+        Point  a       -> s a
 
-    -- Abstractions: apply the substitution to the domain normally,
-    -- then go under abstraction to apply the substitution to free
-    -- subterms.
-    Pi     dom cod -> Pi     (dom >>= s) (cod >>>= s)
-    Lam    dom e   -> Lam    (dom >>= s) (e   >>>= s)
-    Forall dom cod -> Forall (dom >>= s) (cod >>>= s)
+        -- Abstractions: apply the substitution to the domain normally,
+        -- then go under abstraction to apply the substitution to free
+        -- subterms.
+        Lam    dom e   -> Lam    (go dom) (e   >>>= s)
+        Pi     dom cod -> Pi     (go dom) (cod >>>= s)
+        Forall dom cod -> Forall (go dom) (cod >>>= s)
 
-    -- Let: as in the other abstraction terms, but also apply the
-    -- substitution to the saved term.
-    Let    ty u e  -> Let    (ty  >>= s) (u >>= s) (e >>>= s)
+        -- Let: as in the other abstraction terms, but also apply the
+        -- substitution to the saved term.
+        Let    dom u e -> Let    (go dom) (go u) (e >>>= s)
 
-    -- Application: apply the substitution piece-wise on the function
-    -- and on each of its arguments.
-    App    f e     -> App    (f   >>= s) (map (>>= s) e)
+        -- Application: apply the substitution piece-wise on the function
+        -- and on each of its arguments.
+        App    f e     -> App    (go f) (map go e)
 
-    -- Star: since it isn't a normal point, Star should never be
-    -- substituted for anything else.
-    Star           -> Star
+        -- Star: since it isn't a normal point, Star should never be
+        -- substituted for anything else.
+        Star           -> Star
 
 instance Monad Term' where (>>=) = bindTerm
 
@@ -270,10 +271,8 @@ whnf :: Term' a -> Term' a
 
 whnf (App f (x:xs)) =
     case f of
-        Pi _ cod        -> inst cod
-        Lam _ e         -> inst e
-        Forall _ cod    -> inst cod
-        f'              -> App f' (x:xs)
+        Lam _ e -> inst e
+        f'      -> App f' (x:xs)
   where
     inst e = whnf $ App (instantiate1 x e) xs
 
