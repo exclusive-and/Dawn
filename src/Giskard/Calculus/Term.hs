@@ -241,6 +241,13 @@ instantiate1 :: Monad f => f a -> Abs () f a -> f a
 instantiate1 a = instantiate (const a)
 
 -- |
+-- Make an abstraction with no bound subterms. Equivalent to
+-- @e ~~> \ _ -> e@.
+--
+mkNoAbs :: Term' a -> Abs b Term' a
+mkNoAbs = Abs . Point . Subterm
+
+-- |
 -- Make a pi-type from a type by abstracting over a name.
 -- 
 mkPi :: Eq a => a -> Type' a -> Type' a -> Type' a
