@@ -42,8 +42,8 @@ import              Data.Traversable
 data Term' a
     -- |
     -- A thing that we think is atomic in this term. Might be
-    -- a variable or binder, but can also be a subterm during
-    -- substitutions.
+    -- a variable or binder, but can also be an entire free subterm if
+    -- the term is abstracted.
     = Point  a
     
     -- | A pi-type abstracts over a term in a type.
