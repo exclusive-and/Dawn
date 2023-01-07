@@ -63,7 +63,7 @@ data Term' a
     | Forall (Type' a) (Abs () Type' a)
 
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let    (Type' a) (Term' a) (Abs () Term' a)
+    | Let    (Type' a) (Abs () Term' a) (Term' a)
 
     -- |
     -- A term applied to a stack of arguments.
@@ -103,7 +103,7 @@ bindTerm t0 s = go t0 where
 
         -- Let: as in the other abstraction terms, but also apply the
         -- substitution to the saved term.
-        Let    dom u e -> Let    (go dom) (go u) (e >>>= s)
+        Let    dom e u -> Let    (go dom) (e   >>>= s) (go u)
 
         -- Application: apply the substitution piece-wise on the function
         -- and on each of its arguments.
@@ -276,7 +276,7 @@ whnf (App f (x:xs)) =
   where
     inst e = whnf $ App (instantiate1 x e) xs
 
-whnf (Let _ u e) = instantiate1 u e
+whnf (Let _ e u) = instantiate1 u e
 
 whnf e = e
 
