@@ -50,6 +50,14 @@ class IsPoint point where
     --
     -- Reports a 'TCException' if the point doesn't have an ID.
     getPointName :: TraceMonad point m => point -> m Name
+    
+    -- |
+    -- Maybe try to get the name of a meta-variable. Returns
+    -- @Just name@ if the name is a meta-variable, and @Nothing@
+    -- otherwise.
+    -- 
+    -- Reports a 'TCException' if the point doesn't have an ID.
+    maybeGetMetaVar :: TraceMonad point m => point -> m (Maybe Name)
 
 
 -----------------------------------------------------------
@@ -119,10 +127,10 @@ class (Monad m, TraceMonad point m, IsPoint point)
     newMetaVar :: m point
 
     -- | Try to write to a meta-variable; filling it in.
-    writeMetaVar :: point -> Term' point -> m ()
+    writeMetaVar :: Name -> Term' point -> m ()
 
     -- | Try to read from a meta-variable.
-    readMetaVar :: point -> m (MetaVarRef' point)
+    readMetaVar :: Name -> m (MetaVarRef' point)
 
 data MetaVarRef' a
     -- | Unfilled meta-var: can become anything.
