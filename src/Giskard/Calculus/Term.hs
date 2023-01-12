@@ -79,6 +79,10 @@ data Term' a
 
     deriving (Functor, Foldable, Traversable)
 
+-- |
+-- Like other dependently typed languages (e.g. Idris, Agda, Coq, etc),
+-- types are also terms.
+-- 
 type Type' = Term'
 
 
