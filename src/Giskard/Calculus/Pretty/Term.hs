@@ -38,8 +38,8 @@ pprLam bindLvl dom e =
   in
     "Lam (" <> x' <> " : " <> dom' <> ") -> " <> e'
 
-pprLet :: Int -> Type' Text -> Term' Text -> Abs () Term' Text -> Text
-pprLet bindLvl dom u e =
+pprLet :: Int -> Type' Text -> Abs () Term' Text -> Term' Text -> Text
+pprLet bindLvl dom e u =
   let
     x'   = pprBound bindLvl
     dom' = pprTerm' False bindLvl dom
@@ -62,7 +62,7 @@ pprTerm' shouldParen bindLvl tm = case tm of
     Point point     -> point
     Pi dom cod      -> parens $ pprPi bindLvl dom cod
     Lam dom e       -> parens $ pprLam bindLvl dom e
-    Let ty e body   -> parens $ pprLet bindLvl ty e body
+    Let ty body e   -> parens $ pprLet bindLvl ty body e
     App f xs        -> parens $ pprApp bindLvl f xs
   where
     parens s = if shouldParen then "(" <> s <> ")" else s
