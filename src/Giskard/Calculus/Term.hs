@@ -67,11 +67,14 @@ data Term' a
 
     -- |
     -- A term applied to a stack of arguments.
-    -- 
+    --
     -- Invariant: @App f (x:xs) == App (App f [x]) xs@
     | App   (Term' a) [Term' a]
     
-    -- | The top-level type of contexts and telescopes.
+    -- |
+    -- The inaccessible type of types. Anything that's too high up
+    -- to be typed in the normal language - e.g. the Tarski universe
+    -- operators - should have type Star.
     | Star
 
     deriving (Functor, Foldable, Traversable)
