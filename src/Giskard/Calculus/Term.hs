@@ -17,8 +17,11 @@ module Giskard.Calculus.Term
     , stripApps
     ) where
 
+import Giskard.Pretty
+    
 import Control.Monad (ap, liftM)
 import Data.Traversable
+import Data.Text (Text, intercalate)
 
 
 -----------------------------------------------------------
@@ -287,4 +290,95 @@ stripApps :: Term' a -> (Term' a, [Term' a])
 stripApps = \case
     App f xs -> (f, xs)
     e        -> (e, [])
+
+
+-----------------------------------------------------------
+-- Term Pretty-Printing
+-----------------------------------------------------------
+
+-- |
+-- Prettyprint a term whose points have already been prettyprinted.
+-- 
+pprTerm' :: Bool -> Int -> Term' Text -> Text
+pprTerm' shouldParen bindLvl tm = case tm of
+    Star            -> "*"
+    Point point     -> point
+    Pi dom cod      -> parens $ pprPi bindLvl dom cod
+    Lam dom e       -> parens $ pprLam bindLvl dom e
+    Let ty body e   -> parens $ pprLet bindLvl ty body e
+    App f xs        -> parens $ pprApp bindLvl f xs
+  where
+    parens s = if shouldParen then "(" <> s <> ")" else s
+
+-- |
+-- Prettyprint a term after prettyprinting all its points.
+-- Processing the points first allows us to prettyprint any term as
+-- long as we have a point prettyprinter instance.
+-- 
+pprTerm :: Ppr a => Term' a -> Text
+pprTerm = pprTerm' False 0 . (pure . ppr =<<)
+
+instance Ppr a => Ppr (Term' a) where ppr = pprTerm
+
+-- |
+-- Prettyprint a binder.
+-- 
+pprBound :: Int -> Text
+pprBound boundId = "_bound_" <> ppr boundId
+
+-- |
+-- Prettyprint a term under another level of abstraction.
+-- 
+pprAbs :: Int -> Abs () Term' Text -> Text
+pprAbs bindLvl tm =
+    pprTerm' False (bindLvl + 1) $ instantiate1 (pure $ pprBound bindLvl) tm
+
+-- |
+-- Prettyprint a pi-type.
+-- 
+pprPi :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprPi bindLvl dom cod =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    cod' = pprAbs bindLvl cod
+   in
+    "Pi (" <> x' <> " : " <> dom' <> ") -> " <> cod'
+
+-- |
+-- Prettyprint a lambda expression.
+-- 
+pprLam :: Int -> Type' Text -> Abs () Term' Text -> Text
+pprLam bindLvl dom e =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    e'   = pprAbs bindLvl e
+  in
+    "Lam (" <> x' <> " : " <> dom' <> ") -> " <> e'
+
+-- |
+-- Prettyprint a let-expression.
+-- 
+pprLet :: Int -> Type' Text -> Abs () Term' Text -> Term' Text -> Text
+pprLet bindLvl dom e u =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    u'   = pprTerm' False bindLvl u
+    e'   = pprAbs bindLvl e
+  in
+    "Let (" <> x' <> " : " <> dom' <> ") := " <> u' <> " In " <> e' 
+
+-- |
+-- Prettyprint an application.
+-- 
+pprApp :: Int -> Term' Text -> [Term' Text] -> Text
+pprApp bindLvl f xs =
+  let
+    f'  = pprTerm' True bindLvl f
+    xs' = map (pprTerm' True bindLvl) xs
+  in
+    f' <> " " <> intercalate " " xs'
+
 
