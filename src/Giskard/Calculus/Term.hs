@@ -12,18 +12,13 @@ module Giskard.Calculus.Term
     , AbsLike (..)
     , bindAbsSubterms
     , abstract1, instantiate1
-    , mkNoAbs
-    , mkPi, mkForall, mkLam
+    , mkNoAbs, mkPi, mkForall, mkLam
     , whnf
     , stripApps
-    , Subst'
-    , applySubst
     ) where
 
-import              Control.Monad (ap, liftM)
-import              Data.Map (Map)
-import qualified    Data.Map as Map
-import              Data.Traversable
+import Control.Monad (ap, liftM)
+import Data.Traversable
 
 
 -----------------------------------------------------------
@@ -292,25 +287,4 @@ stripApps :: Term' a -> (Term' a, [Term' a])
 stripApps = \case
     App f xs -> (f, xs)
     e        -> (e, [])
-
-
------------------------------------------------------------
--- Simple Pattern Unification of Terms
------------------------------------------------------------
-
-type Subst' a = Map a (Term' a)
-
--- |
--- Apply a substitution map to a term.
--- 
--- Works by looking up each of the term's points in the substitution
--- map. Replace each point found in the map by its corresponding term.
--- Otherwise, if we don't find a point, do nothing to it.
--- 
-applySubst :: Ord a => Term' a -> Subst' a -> Term' a
-applySubst tm subst = do
-    a <- tm
-    case Map.lookup a subst of
-        Just b  -> b
-        Nothing -> pure a
 
