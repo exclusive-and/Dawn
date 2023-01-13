@@ -9,11 +9,11 @@
 module Giskard.Typechecking.Tc where
 
 import              Giskard.Calculus.Term
-import              Giskard.Calculus.Pretty.Term
 import              Giskard.Calculus.SynEq
 
 import              Giskard.Names
 import              Giskard.Pretty
+import              Giskard.Pretty.Term
 
 import qualified    Data.Kind as Kind
 import              Data.Map (Map)

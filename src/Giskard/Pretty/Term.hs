@@ -1,10 +1,10 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.Ppr
--- Description  : Pretty-printing for Calculus IR
+-- Module       : Giskard.Pretty.Term
+-- Description  : Pretty-printing for Calculus Terms
 -----------------------------------------------------------
-module Giskard.Calculus.Pretty.Term where
+module Giskard.Pretty.Term where
 
 import              Giskard.Calculus.Term
 import              Giskard.Pretty

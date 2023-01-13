@@ -75,9 +75,9 @@ Library
                       Giskard.Calculus.Term
                       Giskard.Calculus.SynEq
                       -- Giskard.Calculus.Match
-                      Giskard.Calculus.Pretty.Term
                       Giskard.Names
                       Giskard.Pretty
+                      Giskard.Pretty.Term
                       Giskard.Typechecking.Tc
                       -- Giskard.Telepath.Types
                       -- Giskard.Telepath.Graph
