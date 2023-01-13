@@ -12,8 +12,6 @@ module Giskard.Calculus.SynEq
 
 import Giskard.Calculus.Term
 
-import Giskard.Names
-
 
 -- |
 -- Constructions that have a notion of syntactic equality.
@@ -24,7 +22,7 @@ class SynEq a where
 -- Some base instances for syntactic equality. 'Text', '()', and 'Int'
 -- have trivial syntactic equality thanks to their 'Eq' instances.
 instance SynEq ()   where synEq = (==)
-instance SynEq Name where synEq = (==)
+instance SynEq Int  where synEq = (==)
 
 -- |
 -- Compare two terms in the calculus for syntactic equality.

@@ -20,8 +20,6 @@ module Giskard.Calculus.Term
     , applySubst
     ) where
 
-import              Giskard.Names
-
 import              Control.Monad (ap, liftM)
 import              Data.Map (Map)
 import qualified    Data.Map as Map

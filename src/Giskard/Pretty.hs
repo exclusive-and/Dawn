@@ -7,8 +7,7 @@
 
 module Giskard.Pretty where
 
-import              Data.Text (Text, pack)
-import qualified    Data.Text as Text
+import              Data.Text (Text)
 
 
 class Ppr a where
