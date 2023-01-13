@@ -33,6 +33,7 @@ common common-options
                       StandaloneDeriving
                       TupleSections
                       TypeApplications
+                      TypeFamilies
                       TypeOperators
                       ViewPatterns
 
@@ -49,6 +50,7 @@ Library
                       RankNTypes
                       RecordWildCards
                       TemplateHaskell
+                      UndecidableInstances
 
   Build-depends:      base                    >= 4.11     && < 5,
                       containers              >= 0.5.0.0  && < 0.7,
@@ -72,13 +74,14 @@ Library
   Exposed-modules:    Main
                       Giskard.Calculus.Term
                       Giskard.Calculus.SynEq
-                      Giskard.Calculus.Match
+                      -- Giskard.Calculus.Match
                       Giskard.Calculus.Pretty.Term
                       Giskard.Names
                       Giskard.Pretty
-                      Giskard.Telepath.Types
-                      Giskard.Telepath.Graph
-                      Giskard.Telepath.Ops
+                      Giskard.Typechecking.Tc
+                      -- Giskard.Telepath.Types
+                      -- Giskard.Telepath.Graph
+                      -- Giskard.Telepath.Ops
                       -- Giskard.Telepath.Autograd
                       -- Giskard.Telepath.Engine
 
