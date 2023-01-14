@@ -38,8 +38,8 @@ synEqTerms t1 t2 = case (t1, t2) of
     (Forall dom1 cod1, Forall dom2 cod2)
         -> synEq dom1 dom2 && synEq cod1 cod2
             
-    (Let ty1 e1 u1   , Let ty2 e2 u2   )
-        -> synEq ty1 ty2 && synEq u1 u2 && synEq e1 e2
+    (Let bndr1 e1    , Let bndr2 e2    )
+        -> synEq bndr1 bndr2 && synEq e1 e2
 
     (App f1 x1       , App f2 x2       )
         -> synEq f1 f2 && synEq x1 x2
@@ -51,6 +51,9 @@ synEqTerms t1 t2 = case (t1, t2) of
 instance SynEq a => SynEq (Term' a) where
     synEq = synEqTerms
 
+instance SynEq a => SynEq (Bind' a) where
+    synEq (Bind u1 ty1) (Bind u2 ty2) = synEq u1 u2 && synEq ty1 ty2
+    
 instance SynEq a => SynEq [a] where
     synEq vs1 vs2
         | length vs1 == length vs2 = and $ zipWith synEq vs1 vs2

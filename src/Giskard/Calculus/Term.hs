@@ -6,6 +6,7 @@
 -----------------------------------------------------------
 module Giskard.Calculus.Term
     ( Term' (..), Type'
+    , Bind' (..)
     , bindTerm
     , Abs (..), Point (..)
     , abstract, instantiate
@@ -59,7 +60,7 @@ data Term' a
     | Forall (Type' a) (Abs () Type' a)
 
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let    (Type' a) (Abs () Term' a) (Term' a)
+    | Let    (Bind' a) (Abs () Term' a)
 
     -- |
     -- A term applied to a stack of arguments.
@@ -80,6 +81,13 @@ data Term' a
 -- types are also terms.
 -- 
 type Type' = Term'
+
+-- |
+-- Typed binding of a term. We can omit names from these binders
+-- since 'Abs' will fill in the binding site automagically for us.
+-- 
+data Bind' a = Bind (Term' a) (Type' a)
+    deriving (Functor, Foldable, Traversable)
 
 
 instance Applicative Term' where
@@ -106,7 +114,7 @@ bindTerm t0 s = go t0 where
 
         -- Let: as in the other abstraction terms, but also apply the
         -- substitution to the saved term.
-        Let    dom e u -> Let    (go dom) (e   >>>= s) (go u)
+        Let    bndr e  -> Let    (goBndr bndr) (e >>>= s)
 
         -- Application: apply the substitution piece-wise on the function
         -- and on each of its arguments.
@@ -115,6 +123,8 @@ bindTerm t0 s = go t0 where
         -- Star: since it isn't a normal point, Star should never be
         -- substituted for anything else.
         Star           -> Star
+    
+    goBndr (Bind u ty) = Bind (go u) (go ty)
 
 instance Monad Term' where (>>=) = bindTerm
 
@@ -279,7 +289,7 @@ whnf (App f (x:xs)) =
   where
     inst e = whnf $ App (instantiate1 x e) xs
 
-whnf (Let _ e u) = instantiate1 u e
+whnf (Let (Bind u _) e) = instantiate1 u e
 
 whnf e = e
 
@@ -301,12 +311,12 @@ stripApps = \case
 -- 
 pprTerm' :: Bool -> Int -> Term' Text -> Text
 pprTerm' shouldParen bindLvl tm = case tm of
-    Star            -> "*"
-    Point point     -> point
-    Pi dom cod      -> parens $ pprPi bindLvl dom cod
-    Lam dom e       -> parens $ pprLam bindLvl dom e
-    Let ty body e   -> parens $ pprLet bindLvl ty body e
-    App f xs        -> parens $ pprApp bindLvl f xs
+    Star        -> "*"
+    Point point -> point
+    Pi dom cod  -> parens $ pprPi bindLvl dom cod
+    Lam dom e   -> parens $ pprLam bindLvl dom e
+    Let bndr e  -> parens $ pprLet bindLvl bndr e
+    App f xs    -> parens $ pprApp bindLvl f xs
   where
     parens s = if shouldParen then "(" <> s <> ")" else s
 
@@ -360,15 +370,15 @@ pprLam bindLvl dom e =
 -- |
 -- Prettyprint a let-expression.
 -- 
-pprLet :: Int -> Type' Text -> Abs () Term' Text -> Term' Text -> Text
-pprLet bindLvl dom e u =
+pprLet :: Int -> Bind' Text -> Abs () Term' Text -> Text
+pprLet bindLvl (Bind u ty) e =
   let
-    x'   = pprBound bindLvl
-    dom' = pprTerm' False bindLvl dom
-    u'   = pprTerm' False bindLvl u
-    e'   = pprAbs bindLvl e
+    x'  = pprBound bindLvl
+    ty' = pprTerm' False bindLvl ty
+    u'  = pprTerm' False bindLvl u
+    e'  = pprAbs bindLvl e
   in
-    "Let (" <> x' <> " : " <> dom' <> ") := " <> u' <> " In " <> e' 
+    "Let (" <> x' <> " : " <> ty' <> ") := " <> u' <> " In " <> e' 
 
 -- |
 -- Prettyprint an application.
