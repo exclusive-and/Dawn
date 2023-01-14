@@ -311,12 +311,17 @@ stripApps = \case
 -- 
 pprTerm' :: Bool -> Int -> Term' Text -> Text
 pprTerm' shouldParen bindLvl tm = case tm of
-    Star        -> "*"
-    Point point -> point
-    Pi dom cod  -> parens $ pprPi bindLvl dom cod
-    Lam dom e   -> parens $ pprLam bindLvl dom e
-    Let bndr e  -> parens $ pprLet bindLvl bndr e
-    App f xs    -> parens $ pprApp bindLvl f xs
+    -- Points are already pretty-printed, so just emit them.
+    Point  point   -> point
+    
+    Lam    dom e   -> parens $ pprLam bindLvl dom e
+    Pi     dom cod -> parens $ pprPi bindLvl dom cod
+    Forall dom cod -> parens $ pprForall bindLvl dom cod
+    Let    bndr e  -> parens $ pprLet bindLvl bndr e
+    
+    App    f xs    -> parens $ pprApp bindLvl f xs
+    
+    Star           -> "*"
   where
     parens s = if shouldParen then "(" <> s <> ")" else s
 
@@ -344,18 +349,6 @@ pprAbs bindLvl tm =
     pprTerm' False (bindLvl + 1) $ instantiate1 (pure $ pprBound bindLvl) tm
 
 -- |
--- Prettyprint a pi-type.
--- 
-pprPi :: Int -> Type' Text -> Abs () Type' Text -> Text
-pprPi bindLvl dom cod =
-  let
-    x'   = pprBound bindLvl
-    dom' = pprTerm' False bindLvl dom
-    cod' = pprAbs bindLvl cod
-   in
-    "Pi (" <> x' <> " : " <> dom' <> ") -> " <> cod'
-
--- |
 -- Prettyprint a lambda expression.
 -- 
 pprLam :: Int -> Type' Text -> Abs () Term' Text -> Text
@@ -366,6 +359,30 @@ pprLam bindLvl dom e =
     e'   = pprAbs bindLvl e
   in
     "Lam (" <> x' <> " : " <> dom' <> ") -> " <> e'
+
+-- |
+-- Prettyprint a pi-type.
+-- 
+pprPi :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprPi bindLvl dom cod =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    cod' = pprAbs bindLvl cod
+  in
+    "Pi (" <> x' <> " : " <> dom' <> ") -> " <> cod'
+
+-- |
+-- Prettyprint a forall-type.
+-- 
+pprForall :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprForall bindLvl dom cod =
+  let
+    x'   = pprBound bindLvl
+    dom' = pprTerm' False bindLvl dom
+    cod' = pprAbs bindLvl cod
+  in
+    "Forall (" <> x' <> " : " <> dom' <> ") -> " <> cod'
 
 -- |
 -- Prettyprint a let-expression.
