@@ -37,6 +37,9 @@ import Data.Text (Text, intercalate)
 -- for the original implementation of this idea.
 -- 
 data Term' a
+
+    -- The term-level constructors.
+
     -- |
     -- A thing that we think is atomic in this term. Might be
     -- a variable or binder, but can also be an entire free subterm
@@ -45,6 +48,18 @@ data Term' a
     
     -- | λ-abstractions. Abstracts over a term in a term.
     | Lam    (Type' a) (Abs () Term' a)
+    
+    -- |
+    -- A term applied to a stack of arguments.
+    --
+    -- Invariant: @App f (x:xs) == App (App f [x]) xs@
+    | App    (Term' a) [Term' a]
+    
+    -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
+    | Let    (Bind' a) (Abs () Term' a)
+    
+    
+    -- The type-level constructors.
     
     -- | Types of λ-abstractions. Abstracts over a term in a type.
     | Pi     (Type' a) (Abs () Type' a)
@@ -58,15 +73,6 @@ data Term' a
     --  * System F type parameters.
     --  * Agda/Idris implicit parameters.
     | Forall (Type' a) (Abs () Type' a)
-
-    -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let    (Bind' a) (Abs () Term' a)
-
-    -- |
-    -- A term applied to a stack of arguments.
-    --
-    -- Invariant: @App f (x:xs) == App (App f [x]) xs@
-    | App   (Term' a) [Term' a]
     
     -- |
     -- The inaccessible type of types. Anything that's too high up
