@@ -28,25 +28,26 @@ instance SynEq Int  where synEq = (==)
 -- Compare two terms in the calculus for syntactic equality.
 --
 synEqTerms :: SynEq a => Term' a -> Term' a -> Bool
-synEqTerms t1 t2 = case (t1, t2) of
-    (Point tm1       , Point tm2       ) -> synEq tm1 tm2
-    
-    (Lam dom1 tm1    , Lam dom2 tm2    )
-        -> synEq dom1 dom2 && synEq tm1 tm2
+synEqTerms = case (t1, t2) of
+    (Point point1    , Point point2    )
+        -> synEq point1 point2
+    -- Term constructor comparisons.
+    (Lam dom1 expr1  , Lam dom2 expr2  )
+        -> synEq dom1 dom2 && synEq expr1 expr2
+    (App fun1 args1  , App fun2 args2  )
+        -> synEq fun1 fun2 && synEq args1 args2
+    (Let bndr1 body1 , Let bndr2 body2 )
+        -> synEq bndr1 bndr2 && synEq body1 body2
+    -- Type constructor comparisons.
     (Pi dom1 cod1    , Pi dom2 cod2    )
         -> synEq dom1 dom2 && synEq cod1 cod2
     (Forall dom1 cod1, Forall dom2 cod2)
         -> synEq dom1 dom2 && synEq cod1 cod2
-            
-    (Let bndr1 e1    , Let bndr2 e2    )
-        -> synEq bndr1 bndr2 && synEq e1 e2
-
-    (App f1 x1       , App f2 x2       )
-        -> synEq f1 f2 && synEq x1 x2
-        
-    (Star            , Star            ) -> True
-    
-    (_               , _               ) -> False
+    (Star            , Star            )
+        -> True
+    -- Anything else is not equal.
+    (_               , _               )
+        -> False
 
 instance SynEq a => SynEq (Term' a) where
     synEq = synEqTerms
