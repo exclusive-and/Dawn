@@ -65,7 +65,6 @@ data Term' a
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
     | Let    (Bind' a) (Abs () Term' a)
     
-    
     -- The type-level constructors.
     
     -- | Types of λ-abstractions. Abstracts over a term in a type.
@@ -88,8 +87,8 @@ data Term' a
     | Star
 
     deriving
-        ( Functor       -- ^ Needed in 'bindAbsSubterms'.
-        , Foldable
+        ( Foldable
+        , Functor       -- ^ Needed in 'bindAbsSubterms'.
         , Traversable
         )
 
