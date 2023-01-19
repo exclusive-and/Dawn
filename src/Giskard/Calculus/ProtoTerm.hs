@@ -1,12 +1,12 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.Term
--- Description  : Calculus Term Syntax
+-- Module       : Giskard.Calculus.ProtoTerm
+-- Description  : Calculus Prototypical Term Syntax
 -----------------------------------------------------------
-module Giskard.Calculus.Term
-    ( Term' (..), Type'
-    , Bind' (..)
+module Giskard.Calculus.ProtoTerm
+    ( ProtoTerm (..), ProtoType
+    , ProtoBind (..)
     , bindTerm
     , Abs (..), Point (..)
     , abstract, instantiate
@@ -26,7 +26,7 @@ import Data.Text (Text, intercalate)
 
 
 -----------------------------------------------------------
--- Term Monad
+-- Prototypical Term Monad
 -----------------------------------------------------------
 
 -- |
@@ -36,7 +36,7 @@ import Data.Text (Text, intercalate)
 -- See [the bound package](https://hackage.haskell.org/package/bound)
 -- for the original implementation of this idea.
 -- 
-data Term' a
+data ProtoTerm a
 
     -- The term-level constructors.
 
@@ -54,21 +54,21 @@ data Term' a
     -- 
     -- Equip it with an instantiation rule that fills in binding sites
     -- to make a function.
-    | Lam    (Type' a) (Abs () Term' a)
+    | Lam    (ProtoType a) (Abs () ProtoTerm a)
     
     -- |
     -- A term applied to a stack of arguments outside-in.
     --
     -- Invariant: @App f (x:xs) == App (App f [x]) xs@
-    | App    (Term' a) [Term' a]
+    | App    (ProtoTerm a) [ProtoTerm a]
     
     -- | @let (x : A) = u in e@ is coded as @(\ (x : A) -> e) u@.
-    | Let    (Bind' a) (Abs () Term' a)
+    | Let    (ProtoBind a) (Abs () ProtoTerm a)
     
     -- The type-level constructors.
     
     -- | Types of λ-abstractions. Abstracts over a term in a type.
-    | Pi     (Type' a) (Abs () Type' a)
+    | Pi     (ProtoType a) (Abs () ProtoType a)
 
     -- |
     -- 'Forall' types are a lot-like 'Pi' types. But instead of
@@ -78,7 +78,7 @@ data Term' a
     -- Use 'Forall' to model:
     --  * System F type parameters.
     --  * Agda/Idris implicit parameters.
-    | Forall (Type' a) (Abs () Type' a)
+    | Forall (ProtoType a) (Abs () ProtoType a)
     
     -- |
     -- The inaccessible type of types. Anything that's too high up
@@ -96,17 +96,17 @@ data Term' a
 -- Like other dependently typed languages (e.g. Idris, Agda, Coq, etc),
 -- types are also terms.
 -- 
-type Type' = Term'
+type ProtoType = ProtoTerm
 
 -- |
 -- Typed binding of a term. We can omit names from these binders
 -- since 'Abs' will fill in the binding site automagically for us.
 -- 
-data Bind' a = Bind (Term' a) (Type' a)
+data ProtoBind a = Bind (ProtoTerm a) (ProtoType a)
     deriving (Functor, Foldable, Traversable)
 
 
-instance Applicative Term' where
+instance Applicative ProtoTerm where
     pure  = Point
     (<*>) = ap
 
@@ -114,7 +114,7 @@ instance Applicative Term' where
 -- Recurse over a term to apply a function which substitutes points
 -- with new subterms.
 -- 
-bindTerm :: Term' a -> (a -> Term' c) -> Term' c
+bindTerm :: ProtoTerm a -> (a -> ProtoTerm c) -> ProtoTerm c
 bindTerm t0 s = go t0 where
     go t = case t of
         -- Points: replace a point with the term it corresponds to in
@@ -142,7 +142,7 @@ bindTerm t0 s = go t0 where
     
     goBndr (Bind u ty) = Bind (go u) (go ty)
 
-instance Monad Term' where (>>=) = bindTerm
+instance Monad ProtoTerm where (>>=) = bindTerm
 
 
 -----------------------------------------------------------
@@ -272,31 +272,31 @@ instantiate1 a = instantiate (const a)
 -- Make an abstraction with no bound subterms. Equivalent to
 -- @e ~~> \ _ -> e@.
 --
-mkNoAbs :: Term' a -> Abs b Term' a
+mkNoAbs :: ProtoTerm a -> Abs b ProtoTerm a
 mkNoAbs = Abs . Point . Subterm
 
 -- |
 -- Make a pi-type from a type by abstracting over a name.
 -- 
-mkPi :: Eq a => a -> Type' a -> Type' a -> Type' a
+mkPi :: Eq a => a -> ProtoType a -> ProtoType a -> ProtoType a
 mkPi nm dom cod = Pi dom $ abstract1 nm cod
 
 -- |
 -- Make a forall-type from a type by abstracting over a name.
 --
-mkForall :: Eq a => a -> Type' a -> Type' a -> Type' a
+mkForall :: Eq a => a -> ProtoType a -> ProtoType a -> ProtoType a
 mkForall nm dom cod = Forall dom $ abstract1 nm cod
 
 -- |
 -- Make a lambda-term from a term by abstracting over a name.
 -- 
-mkLam :: Eq a => a -> Type' a -> Term' a -> Term' a
+mkLam :: Eq a => a -> ProtoType a -> ProtoTerm a -> ProtoTerm a
 mkLam nm dom tm = Lam dom $ abstract1 nm tm
 
 -- |
 -- Evaluate a term to Weak Head-Normal Form (WHNF).
 -- 
-whnf :: Term' a -> Term' a
+whnf :: ProtoTerm a -> ProtoTerm a
 
 whnf (App f (x:xs)) =
     case f of
@@ -312,7 +312,7 @@ whnf e = e
 -- |
 -- Strip any applications off the head of a term.
 -- 
-stripApps :: Term' a -> (Term' a, [Term' a])
+stripApps :: ProtoTerm a -> (ProtoTerm a, [ProtoTerm a])
 stripApps = \case
     App f xs -> (f, xs)
     e        -> (e, [])
@@ -325,7 +325,7 @@ stripApps = \case
 -- |
 -- Prettyprint a term whose points have already been prettyprinted.
 -- 
-pprTerm' :: Bool -> Int -> Term' Text -> Text
+pprTerm' :: Bool -> Int -> ProtoTerm Text -> Text
 pprTerm' shouldParen bindLvl tm = case tm of
     -- Points are already pretty-printed, so just emit them.
     Point  point   -> point
@@ -346,10 +346,10 @@ pprTerm' shouldParen bindLvl tm = case tm of
 -- Processing the points first allows us to prettyprint any term as
 -- long as we have a point prettyprinter instance.
 -- 
-pprTerm :: Ppr a => Term' a -> Text
+pprTerm :: Ppr a => ProtoTerm a -> Text
 pprTerm = pprTerm' False 0 . (pure . ppr =<<)
 
-instance Ppr a => Ppr (Term' a) where ppr = pprTerm
+instance Ppr a => Ppr (ProtoTerm a) where ppr = pprTerm
 
 -- |
 -- Prettyprint a binder.
@@ -360,14 +360,14 @@ pprBound boundId = "_bound_" <> ppr boundId
 -- |
 -- Prettyprint a term under another level of abstraction.
 -- 
-pprAbs :: Int -> Abs () Term' Text -> Text
+pprAbs :: Int -> Abs () ProtoTerm Text -> Text
 pprAbs bindLvl tm =
     pprTerm' False (bindLvl + 1) $ instantiate1 (pure $ pprBound bindLvl) tm
 
 -- |
 -- Prettyprint a lambda expression.
 -- 
-pprLam :: Int -> Type' Text -> Abs () Term' Text -> Text
+pprLam :: Int -> ProtoType Text -> Abs () ProtoTerm Text -> Text
 pprLam bindLvl dom e =
   let
     x'   = pprBound bindLvl
@@ -379,7 +379,7 @@ pprLam bindLvl dom e =
 -- |
 -- Prettyprint a pi-type.
 -- 
-pprPi :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprPi :: Int -> ProtoType Text -> Abs () ProtoType Text -> Text
 pprPi bindLvl dom cod =
   let
     x'   = pprBound bindLvl
@@ -391,7 +391,7 @@ pprPi bindLvl dom cod =
 -- |
 -- Prettyprint a forall-type.
 -- 
-pprForall :: Int -> Type' Text -> Abs () Type' Text -> Text
+pprForall :: Int -> ProtoType Text -> Abs () ProtoType Text -> Text
 pprForall bindLvl dom cod =
   let
     x'   = pprBound bindLvl
@@ -403,7 +403,7 @@ pprForall bindLvl dom cod =
 -- |
 -- Prettyprint a let-expression.
 -- 
-pprLet :: Int -> Bind' Text -> Abs () Term' Text -> Text
+pprLet :: Int -> ProtoBind Text -> Abs () ProtoTerm Text -> Text
 pprLet bindLvl (Bind u ty) e =
   let
     x'  = pprBound bindLvl
@@ -416,7 +416,7 @@ pprLet bindLvl (Bind u ty) e =
 -- |
 -- Prettyprint an application.
 -- 
-pprApp :: Int -> Term' Text -> [Term' Text] -> Text
+pprApp :: Int -> ProtoTerm Text -> [ProtoTerm Text] -> Text
 pprApp bindLvl f xs =
   let
     f'  = pprTerm' True bindLvl f

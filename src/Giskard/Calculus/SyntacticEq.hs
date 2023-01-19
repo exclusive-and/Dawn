@@ -1,16 +1,16 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.SynEq
+-- Module       : Giskard.Calculus.SyntacticEq
 -- Description  : Syntactic Equality of Terms
 -----------------------------------------------------------
-module Giskard.Calculus.SynEq
+module Giskard.Calculus.SyntacticEq
     ( SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
     ) where
 
-import Giskard.Calculus.Term
+import Giskard.Calculus.ProtoTerm
 
 
 -- |
@@ -27,7 +27,7 @@ instance SynEq Int  where synEq = (==)
 -- |
 -- Compare two terms in the calculus for syntactic equality.
 --
-synEqTerms :: SynEq a => Term' a -> Term' a -> Bool
+synEqTerms :: SynEq a => ProtoTerm a -> ProtoTerm a -> Bool
 synEqTerms t1 t2 = case (t1, t2) of
     (Point point1    , Point point2    )
         -> synEq point1 point2
@@ -49,10 +49,10 @@ synEqTerms t1 t2 = case (t1, t2) of
     (_               , _               )
         -> False
 
-instance SynEq a => SynEq (Term' a) where
+instance SynEq a => SynEq (ProtoTerm a) where
     synEq = synEqTerms
 
-instance SynEq a => SynEq (Bind' a) where
+instance SynEq a => SynEq (ProtoBind a) where
     synEq (Bind u1 ty1) (Bind u2 ty2) = synEq u1 u2 && synEq ty1 ty2
     
 instance SynEq a => SynEq [a] where
@@ -66,12 +66,12 @@ instance SynEq a => SynEq [a] where
 --
 synEqAbs
     :: (SynEq b, SynEq a)
-    => Abs b Term' a
-    -> Abs b Term' a
+    => Abs b ProtoTerm a
+    -> Abs b ProtoTerm a
     -> Bool
 synEqAbs (Abs m1) (Abs m2) = synEqTerms m1 m2
 
-instance (SynEq b, SynEq a) => SynEq (Abs b Term' a) where
+instance (SynEq b, SynEq a) => SynEq (Abs b ProtoTerm a) where
     synEq = synEqAbs
 
 -- |
