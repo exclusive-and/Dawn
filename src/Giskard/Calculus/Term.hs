@@ -41,16 +41,23 @@ data Term' a
     -- The term-level constructors.
 
     -- |
-    -- A thing that we think is atomic in this term. Might be
-    -- a variable or binder, but can also be an entire free subterm
-    -- if the term is abstracted.
+    -- A thing that we think is atomic in this term.
+    -- 
+    -- What is atomic depends on what the term represents. In the
+    -- simple case, variables and literals are atomic. In an
+    -- abstraction, the atomic points are binding sites and free
+    -- subterms.
     = Point  a
     
-    -- | λ-abstractions. Abstracts over a term in a term.
+    -- |
+    -- λ-abstractions: abstract over a term in a term.
+    -- 
+    -- Equip it with an instantiation rule that fills in binding sites
+    -- to make a function.
     | Lam    (Type' a) (Abs () Term' a)
     
     -- |
-    -- A term applied to a stack of arguments.
+    -- A term applied to a stack of arguments outside-in.
     --
     -- Invariant: @App f (x:xs) == App (App f [x]) xs@
     | App    (Term' a) [Term' a]
@@ -80,7 +87,11 @@ data Term' a
     -- operators - should have type Star.
     | Star
 
-    deriving (Functor, Foldable, Traversable)
+    deriving
+        ( Functor       -- ^ Needed in 'bindAbsSubterms'.
+        , Foldable
+        , Traversable
+        )
 
 -- |
 -- Like other dependently typed languages (e.g. Idris, Agda, Coq, etc),
