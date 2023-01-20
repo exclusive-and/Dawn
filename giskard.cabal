@@ -72,13 +72,15 @@ Library
                       unordered-containers    >= 0.2.3.3  && < 0.3
 
   Exposed-modules:    Main
-                      Giskard.Calculus.Term
-                      Giskard.Calculus.SynEq
+                      Giskard.Calculus.ProtoTerm
+                      Giskard.Calculus.SyntacticEq
                       -- Giskard.Calculus.Match
                       Giskard.Names
                       Giskard.Pretty
-                      Giskard.Pretty.Term
                       Giskard.Typechecking.Tc
+                      Giskard.Typechecking.Common
+                      -- Giskard.Typechecking.STLC
+                      Giskard.Typechecking.SystemF
                       -- Giskard.Telepath.Types
                       -- Giskard.Telepath.Graph
                       -- Giskard.Telepath.Ops

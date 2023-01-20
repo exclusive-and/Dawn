@@ -8,12 +8,10 @@
 -----------------------------------------------------------
 module Giskard.Typechecking.Tc where
 
-import              Giskard.Calculus.Term
-import              Giskard.Calculus.SynEq
-
+import              Giskard.Calculus.ProtoTerm
+import              Giskard.Calculus.SyntacticEq
 import              Giskard.Names
 import              Giskard.Pretty
-import              Giskard.Pretty.Term
 
 import qualified    Data.Kind as Kind
 import              Data.Map (Map)
@@ -21,9 +19,9 @@ import qualified    Data.Map as Map
 import              Data.Text (Text)
 
 
-type TcTerm theTc = Term' (TcPoint theTc)
+type TcTerm theTc = ProtoTerm (TcPoint theTc)
 
-type TcType theTc = Type' (TcPoint theTc)
+type TcType theTc = ProtoType (TcPoint theTc)
 
 -- |
 -- What kind of point should a typechecker use?
@@ -43,30 +41,42 @@ data family TcMonad theTc :: Kind.Type -> Kind.Type
 -- |
 -- Type indices that are typecheckers.
 -- 
-class Typechecker theTc where
+class Monad (TcMonad theTc) => Typechecker theTc where
     -- |
-    -- Infer the type of a term. Returns the term, since there
-    -- may be specializations or reductions applied.
+    -- Check the actual type of a term against an expected type.
+    -- Returns the term, since there may be specializations and
+    -- reductions applied.
+    check
+        :: TcTerm theTc
+        -> TcGoal theTc
+        -> TcMonad theTc (TcTerm theTc)
+
+    -- | Infer the type of a term.
     infer
         :: TcTerm theTc
         -> TcMonad theTc (TcTerm theTc, TcType theTc)
-    
-    -- | Check the actual type of a term against an expected type.
-    check
-        :: TcTerm theTc
-        -> TcType theTc
-        -> TcMonad theTc (TcTerm theTc, TcType theTc)
+
+-- |
+-- The typechecking goal: whether we're trying to check against
+-- some type, or we're trying to infer the type of the term.
+--
+data TcGoal theTc
+    -- | We want to check the type of this term against this type.
+    = Check (TcType theTc)
+
+    -- | We want to infer the type of this term.
+    | Infer MetaVar
 
 
 -- |
 -- Typecheckers that have trace and exception reporting.
 -- 
-class TcHasTrace theTc where
+class Ppr (TcPoint theTc) => TcHasTrace theTc where
     -- | Trace TC execution with a helpful message.
     traceTC :: String -> Text -> TcMonad theTc ()
     
     -- | Throw a fatal typechecking exception.
-    throwTC :: TcException theTc -> TcMonad theTc ()
+    throwTC :: TcException theTc -> TcMonad theTc b
 
 data TcException theTc
     -- | Mismatch in types: expected one type, got another.
@@ -89,7 +99,7 @@ instance Ppr (TcPoint theTc) => Ppr (TcException theTc) where
 -- |
 -- Typecheckers that have meta-variable solvers.
 -- 
-class TcHasMetaVars theTc where
+class Monad (TcMonad theTc) => TcHasMetaVars theTc where
     -- | Update the typechecker's meta-variable map.
     modifyMetaVars
         :: (MetaVarMap theTc -> MetaVarMap theTc)
@@ -117,7 +127,7 @@ class TcHasMetaVars theTc where
 
 type MetaVar = Name
 
-type MetaVarMap theTc = Map MetaVar (TcTerm theTc)
+type MetaVarMap theTc = Map MetaVar (MetaVarRef theTc)
 
 data MetaVarRef theTc
     -- | Unfilled meta-var: can become anything.
@@ -129,7 +139,7 @@ data MetaVarRef theTc
 -- |
 -- Typecheckers that have term typing contexts.
 -- 
-class TcHasContext theTc where
+class Monad (TcMonad theTc) => TcHasContext theTc where
     -- | Update the typechecker's typing context.
     modifyContext
         :: (Context theTc -> Context theTc)
@@ -151,7 +161,7 @@ class TcHasContext theTc where
     
     -- | Get the type of a variable from the typing context.
     getVarType
-        :: ContextVar
+        :: TcPoint theTc
         -> TcMonad theTc (TcType theTc)
 
 type ContextVar = Name
