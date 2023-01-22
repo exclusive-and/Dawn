@@ -6,7 +6,20 @@
 -- Module       : Giskard.Typechecking.Tc
 -- Description  : Some Reusable Type-checker Types and Classes
 -----------------------------------------------------------
-module Giskard.Typechecking.Tc where
+module Giskard.Typechecking.Tc
+    ( TcTerm, TcType
+    , TcPoint (..)
+    , TcMonad (..)
+    , Typechecker (..), TcGoal (..)
+    , TcHasTrace (..)
+    , TcException (..)
+    , TcHasMetaVars (..)
+    , MetaVar
+    , MetaVarMap, MetaVarRef (..)
+    , newFlexiMetaVar
+    , TcHasContext (..)
+    , ContextVar, Context
+    ) where
 
 import              Giskard.Calculus.ProtoTerm
 import              Giskard.Calculus.SyntacticEq
@@ -134,6 +147,30 @@ data MetaVarRef theTc
     = Flexible
     -- | Filled-in meta-var.
     | Filled    (TcTerm theTc)
+
+-- |
+-- Create a new meta-variable pointing to a flexible reference.
+-- 
+newFlexiMetaVar
+    :: (TcHasMetaVars theTc, TcHasContext theTc)
+    => TcType theTc
+    -> TcMonad theTc MetaVar
+    
+newFlexiMetaVar ty = do
+    mv <- newMetaVar
+    modifyMetaVars $ Map.insert mv Flexible
+    modifyContext  $ Map.insert mv ty
+    pure mv
+
+-- |
+-- Create a new meta-variable and a type that is also a meta-variable.
+-- 
+newOpenMetaVar
+    :: (TcHasMetaVars theTc, TcHasContext theTc)
+    => TcMonad theTc MetaVar
+
+newOpenMetaVar = do
+    
 
 
 -- |
