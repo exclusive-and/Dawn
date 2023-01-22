@@ -6,17 +6,17 @@
 -----------------------------------------------------------
 module Giskard.Typechecking.Common where
 
-import Giskard.Calculus.ProtoTerm
-import Giskard.Calculus.SyntacticEq
-import Giskard.Names
-import Giskard.Pretty
-import Giskard.Typechecking.Tc
+import              Giskard.Calculus.ProtoTerm
+import              Giskard.Calculus.SyntacticEq
+import              Giskard.Names
+import              Giskard.Pretty
+import              Giskard.Typechecking.Tc
 
-import Control.Monad (zipWithM_)
-import Data.Set (Set)
-import qualified Data.Set as Set
+import              Control.Monad (zipWithM_)
+import              Data.Set (Set)
+import qualified    Data.Set as Set
 
-import Data.Text (pack)
+import              Data.Text (pack)
 
 
 -- |
@@ -47,16 +47,35 @@ unifyMetaVars = go Set.empty where
     -- If either term is a fictitious point, then anything other than
     -- syntactic equality is a unification failure. If either term is a
     -- point that is /not/ fictitious, try to do normal point unification.
-
+    
     go fictitious tm1@(Point p) tm2
         | Just mv <- maybeGetMetaVar p
         , mv `Set.member` fictitious = goFictitious tm1 tm2
-        | otherwise                  = goPoint fictitious p tm2
+        
+        -- Try to unify points. If the point is a meta-variable, try to fill
+        -- it in. Otherwise, make sure that they're syntactically equal.
+        | Just mv <- maybeGetMetaVar p
+        = do
+            traceTC "goPoint" $ ppr mv <> " := " <> ppr tm2
+            res <- readMetaVar mv
+            case res of
+                Filled tm1' -> go fictitious tm1' tm2
+                Flexible    -> unifyUnfilledMetaVar mv tm2
 
     go fictitious tm1 tm2@(Point p)
         | Just mv <- maybeGetMetaVar p
         , mv `Set.member` fictitious = goFictitious tm1 tm2
-        | otherwise                  = goPoint fictitious p tm1
+        
+        | Just mv <- maybeGetMetaVar p
+        = do
+            traceTC "goPoint" $ ppr mv <> " := " <> ppr tm2
+            res <- readMetaVar mv
+            case res of
+                Filled tm2' -> go fictitious tm1 tm2'
+                Flexible    -> unifyUnfilledMetaVar mv tm1
+    
+    go _ (Point p1) (Point p2)
+        | synEq p1 p2 = pure ()
 
     -- If the terms are abstractions, instantiate the abstraction with a
     -- fictitious point and continue.
@@ -120,36 +139,7 @@ unifyMetaVars = go Set.empty where
         = throwTC $ OtherTcErr
             $ "Couldn't match fictitious binders "
            <> ppr tm1 <> " and " <> ppr tm2
-
-    -- Try to unify points. If the point is a meta-variable, try to fill
-    -- it in. Otherwise, make sure that they're syntactically equal.
-
-    goPoint
-        :: ( SynEq (TcPoint theTc)
-           , TcHasTrace theTc
-           , TcHasMetaVars theTc
-           )
-        => Set MetaVar
-        -> TcPoint theTc
-        -> TcTerm theTc
-        -> TcMonad theTc ()
-
-    goPoint fictitious p tm2
-        | Just mv <- maybeGetMetaVar p
-        = do
-            traceTC "goPoint" $ ppr mv <> " := " <> ppr tm2
-            res <- readMetaVar mv
-            case res of
-                Filled tm1 -> go fictitious tm1 tm2
-                Flexible   -> unifyUnfilledMetaVar mv tm2
-
-    goPoint _ p1 (Point p2)
-        | synEq p1 p2 = pure ()
-
-    -- TODO: actually emit constraints rather than failing.
-    goPoint _ tm1 tm2 = throwTC $ OtherTcErr $
-        "Meta-variable unification failed: " <> ppr tm1 <> ", " <> ppr tm2
-    
+           
 -- |
 -- Unify a meta-variable by filling it in.
 -- 
