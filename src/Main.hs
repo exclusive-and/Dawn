@@ -1,7 +1,48 @@
 
 module Main where
 
-import Giskard.Calculus.Term hiding (Term, Type)
+import Giskard.Calculus.ProtoTerm
+import Giskard.Pretty
+import Giskard.Typechecking.Tc
+import Giskard.Typechecking.Common
+-- import Giskard.Typechecking.STLC
+import Giskard.Typechecking.SystemF
+
+import Control.Lens
+import Control.Monad.State.Lazy
+import Control.Monad.Trans.Except
+import Data.Map (Map)
+import qualified Data.Map as Map
+import qualified Data.Text as Text
+
+main :: IO ()
+main = pure ()
+
+test :: TcMonad SystemF [MetaVarRef SystemF]
+test = do
+    let x0 = Var 0 Nothing
+        x1 = Var 1 Nothing
+        x2 = Var 2 Nothing
+        x3 = Var 3 Nothing
+    
+    mv1 <- newFlexiMetaVar
+    mv2 <- newFlexiMetaVar
+    let x4 = Point $ mkMetaVarPoint mv1
+        x5 = Point $ mkMetaVarPoint mv2
+        
+        tm1 = mkLam x1 Star $ App x4 [Point x1, Point x2]
+        tm2 = mkLam x3 Star $ App (App (Point x0) [Star]) [Point x3, x5]
+    unifyMetaVars tm1 tm2
+    
+    mv1x <- readMetaVar mv1
+    mv2x <- readMetaVar mv2
+    
+    pure [mv1x, mv2x]
+
+
+{-
+
+import Giskard.Calculus.Term
 import Giskard.Calculus.Pretty.Term
 
 import Giskard.Telepath.Types
@@ -68,3 +109,5 @@ runTelepathTCMTest = do
 main :: IO ()
 main = do
     runTcmTest
+
+        -}
