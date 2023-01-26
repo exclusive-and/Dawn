@@ -21,8 +21,7 @@ module Giskard.Typechecking.Tc
     , ContextVar, Context
     ) where
 
-import              Giskard.Calculus.ProtoTerm
-import              Giskard.Calculus.SyntacticEq
+import              Giskard.Calculus
 import              Giskard.Names
 import              Giskard.Pretty
 
@@ -153,15 +152,14 @@ data MetaVarRef theTc
 -- 
 newFlexiMetaVar
     :: (TcHasMetaVars theTc, TcHasContext theTc)
-    => TcType theTc
-    -> TcMonad theTc MetaVar
+    => TcMonad theTc MetaVar
     
-newFlexiMetaVar ty = do
+newFlexiMetaVar = do
     mv <- newMetaVar
     modifyMetaVars $ Map.insert mv Flexible
-    modifyContext  $ Map.insert mv ty
+    -- modifyContext  $ Map.insert mv ty
     pure mv
-
+{-
 -- |
 -- Create a new meta-variable and a type that is also a meta-variable.
 -- 
@@ -170,7 +168,7 @@ newOpenMetaVar
     => TcMonad theTc MetaVar
 
 newOpenMetaVar = do
-    
+-}
 
 
 -- |

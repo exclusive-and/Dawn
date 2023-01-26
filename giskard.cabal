@@ -71,6 +71,7 @@ Library
                       unordered-containers    >= 0.2.3.3  && < 0.3
 
   Exposed-modules:    Main
+                      Giskard.Calculus
                       Giskard.Calculus.ProtoTerm
                       Giskard.Calculus.SyntacticEq
                       -- Giskard.Calculus.Match

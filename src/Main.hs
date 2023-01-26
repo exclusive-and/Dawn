@@ -1,7 +1,7 @@
 
 module Main where
 
-import Giskard.Calculus.ProtoTerm
+import Giskard.Calculus
 import Giskard.Pretty
 import Giskard.Typechecking.Tc
 import Giskard.Typechecking.Common

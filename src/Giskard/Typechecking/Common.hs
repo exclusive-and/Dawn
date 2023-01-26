@@ -6,8 +6,7 @@
 -----------------------------------------------------------
 module Giskard.Typechecking.Common where
 
-import              Giskard.Calculus.ProtoTerm
-import              Giskard.Calculus.SyntacticEq
+import              Giskard.Calculus
 import              Giskard.Names
 import              Giskard.Pretty
 import              Giskard.Typechecking.Tc
@@ -56,7 +55,7 @@ unifyMetaVars = go Set.empty where
         -- it in. Otherwise, make sure that they're syntactically equal.
         | Just mv <- maybeGetMetaVar p
         = do
-            traceTC "goPoint" $ ppr mv <> " := " <> ppr tm2
+            traceTC "unifyMetaVars" $ ppr mv <> " := " <> ppr tm2
             res <- readMetaVar mv
             case res of
                 Filled tm1' -> go fictitious tm1' tm2
@@ -68,7 +67,7 @@ unifyMetaVars = go Set.empty where
         
         | Just mv <- maybeGetMetaVar p
         = do
-            traceTC "goPoint" $ ppr mv <> " := " <> ppr tm2
+            traceTC "unifyMetaVars" $ ppr mv <> " := " <> ppr tm2
             res <- readMetaVar mv
             case res of
                 Filled tm2' -> go fictitious tm1 tm2'
