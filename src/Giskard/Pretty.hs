@@ -5,20 +5,22 @@
 -- Description  : Simple Prettyprinter Class
 -----------------------------------------------------------
 
-module Giskard.Pretty where
+module Giskard.Pretty
+    ( Pretty (..)
+    ) where
 
 import Data.Text (Text, pack)
 
 
-class Ppr a where
-    ppr :: a -> Text
+class Pretty a where
+    pretty :: a -> Text
 
 
-instance Ppr () where
-    ppr () = "()"
+instance Pretty () where
+    pretty () = "()"
     
-instance Ppr Int where
-    ppr = pack . show
+instance Pretty Int where
+    pretty = pack . show
 
-instance Ppr Text where
-    ppr = id
+instance Pretty Text where
+    pretty = id

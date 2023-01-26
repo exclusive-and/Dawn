@@ -83,7 +83,7 @@ data TcGoal theTc
 -- |
 -- Typecheckers that have trace and exception reporting.
 -- 
-class Ppr (TcPoint theTc) => TcHasTrace theTc where
+class Pretty (TcPoint theTc) => TcHasTrace theTc where
     -- | Trace TC execution with a helpful message.
     traceTC :: String -> Text -> TcMonad theTc ()
     
@@ -98,12 +98,12 @@ data TcException theTc
     -- | Generic failure with an explanatory message.
     | OtherTcErr    Text
 
-instance Ppr (TcPoint theTc) => Ppr (TcException theTc) where
-    ppr ex = case ex of
+instance Pretty (TcPoint theTc) => Pretty (TcException theTc) where
+    pretty ex = case ex of
         Mismatch ty1 ty2
-            -> "Mismatch between " <> ppr ty1 <> " and " <> ppr ty2
+            -> "Mismatch between " <> pretty ty1 <> " and " <> pretty ty2
         NotInScope x
-            -> "Variable " <> ppr x <> " not in scope"
+            -> "Variable " <> pretty x <> " not in scope"
         OtherTcErr err
             -> err
 

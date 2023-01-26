@@ -74,8 +74,8 @@ runTcmTest :: IO ()
 runTcmTest = do
     let (r, _) = runTC tcmTest (TCState (reallyPrimTys `Map.union` primOpTys) 30)
     case r of
-        Left err -> print $ ppr err
-        Right ty -> print $ ppr ty
+        Left err -> print $ pretty err
+        Right ty -> print $ pretty ty
 
 telepathTest :: Monad m => TelepathT m Node
 telepathTest = do
@@ -100,11 +100,11 @@ runTelepathTCMTest = do
         tls = TelepathState Map.empty primOpTmMap 0
         (r1, _) = runTC (runTelepathT telepathTCMTest tls) tcs
     case r1 of
-        Left err -> print $ ppr err
+        Left err -> print $ pretty err
         Right (r2, _) ->
             case r2 of
                 Left err -> print err
-                Right ty -> print $ ppr ty
+                Right ty -> print $ pretty ty
 
 main :: IO ()
 main = do

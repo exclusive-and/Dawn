@@ -346,16 +346,16 @@ pprTerm' shouldParen bindLvl tm = case tm of
 -- Processing the points first allows us to prettyprint any term as
 -- long as we have a point prettyprinter instance.
 -- 
-pprTerm :: Ppr a => ProtoTerm a -> Text
-pprTerm = pprTerm' False 0 . (pure . ppr =<<)
+pprTerm :: Pretty a => ProtoTerm a -> Text
+pprTerm = pprTerm' False 0 . (pure . pretty =<<)
 
-instance Ppr a => Ppr (ProtoTerm a) where ppr = pprTerm
+instance Pretty a => Pretty (ProtoTerm a) where pretty = pprTerm
 
 -- |
 -- Prettyprint a binder.
 -- 
 pprBound :: Int -> Text
-pprBound boundId = "_bound_" <> ppr boundId
+pprBound boundId = "_bound_" <> pretty boundId
 
 -- |
 -- Prettyprint a term under another level of abstraction.

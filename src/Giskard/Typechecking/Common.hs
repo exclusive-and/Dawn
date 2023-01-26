@@ -55,7 +55,7 @@ unifyMetaVars = go Set.empty where
         -- it in. Otherwise, make sure that they're syntactically equal.
         | Just mv <- maybeGetMetaVar p
         = do
-            traceTC "unifyMetaVars" $ ppr mv <> " := " <> ppr tm2
+            traceTC "unifyMetaVars" $ pretty mv <> " := " <> pretty tm2
             res <- readMetaVar mv
             case res of
                 Filled tm1' -> go fictitious tm1' tm2
@@ -67,7 +67,7 @@ unifyMetaVars = go Set.empty where
         
         | Just mv <- maybeGetMetaVar p
         = do
-            traceTC "unifyMetaVars" $ ppr mv <> " := " <> ppr tm2
+            traceTC "unifyMetaVars" $ pretty mv <> " := " <> pretty tm2
             res <- readMetaVar mv
             case res of
                 Filled tm2' -> go fictitious tm1 tm2'
@@ -119,7 +119,7 @@ unifyMetaVars = go Set.empty where
         
     -- TODO: actually emit constraints rather than failing.
     go _ tm1 tm2 = throwTC $ OtherTcErr $
-        "Meta-variable unification failed: " <> ppr tm1 <> ", " <> ppr tm2
+        "Meta-variable unification failed: " <> pretty tm1 <> ", " <> pretty tm2
 
     -- Check that fictitious points are indeed equal.
 
@@ -137,7 +137,7 @@ unifyMetaVars = go Set.empty where
         | otherwise
         = throwTC $ OtherTcErr
             $ "Couldn't match fictitious binders "
-           <> ppr tm1 <> " and " <> ppr tm2
+           <> pretty tm1 <> " and " <> pretty tm2
            
 -- |
 -- Unify a meta-variable by filling it in.
