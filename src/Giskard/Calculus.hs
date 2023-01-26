@@ -5,9 +5,8 @@
 -- Description  : Common Typed Lambda Calculus Implementation
 -----------------------------------------------------------
 module Giskard.Calculus
-    ( module Giskard.Calculus.ProtoTerm
-    , module Giskard.Calculus.SyntacticEq
+    ( module X
     ) where
 
-import Giskard.Calculus.ProtoTerm
-import Giskard.Calculus.SyntacticEq
+import Giskard.Calculus.ProtoTerm   as X
+import Giskard.Calculus.SyntacticEq as X
