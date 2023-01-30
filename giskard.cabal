@@ -72,6 +72,7 @@ Library
 
   Exposed-modules:    Main
                       Giskard.Calculus
+                      Giskard.Calculus.Abstractions
                       Giskard.Calculus.ProtoTerm
                       Giskard.Calculus.SyntacticEq
                       -- Giskard.Calculus.Match

@@ -10,6 +10,7 @@ module Giskard.Calculus.SyntacticEq
     , synEqAbs, synEqPoints
     ) where
 
+import Giskard.Calculus.Abstractions
 import Giskard.Calculus.ProtoTerm
 
 
