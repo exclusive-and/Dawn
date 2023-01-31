@@ -17,22 +17,13 @@ import Data.Traversable
 
 
 -- |
--- An abstraction binds a variable in a term, so that all points
--- in the term are either binders, or subterms with no bound points.
--- It is analogous to the abstraction typing rule:
---
--- @
---        C, x : A |- e : B
---  ------------------------------
---   C |- \ (x : A) -> e : A -> B
--- @
---
--- Where all points in @e@ are either @x@, or variables in @C@.
+-- Abstractions allow terms to contain holes that can be filled in
+-- later on.
 --
 newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
 
 -- |
--- A thing that is either a binder or a subterm.
+-- A thing that is either a bound hole or a subterm.
 --
 data Point b a = Bound b | Subterm a
 
