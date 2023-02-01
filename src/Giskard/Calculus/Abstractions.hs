@@ -28,9 +28,8 @@ newtype Abs b f a = Abs { unAbs :: f (Point b (f a)) }
 data Point b a = Bound b | Subterm a
 
 -- |
--- Abstract a term using the type rule in 'Abs'. Applies a test
--- function to each point, and replaces the point with the appropriate
--- binder when applicable.
+-- Create an abstraction from a term by replacing points that meet certain
+-- criteria with bound holes.
 --
 abstract :: Monad f => (a -> Maybe b) -> f a -> Abs b f a
 abstract test tm = Abs $ do
@@ -40,14 +39,14 @@ abstract test tm = Abs $ do
         Nothing -> Subterm (pure a)
 
 -- |
--- Abstract a term over a single point (using 'Eq', not 'SynEq').
+-- Create an abstraction with a single binder for all its holes. This
+-- rule corresponds to ordinary lambda abstraction.
 --
 abstract1 :: (Monad f, Eq a) => a -> f a -> Abs () f a
 abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
 
 -- |
--- Eliminate an abstraction by replacing bound variables with subterms
--- using a substitution function.
+-- Instantiate the holes in an abstraction.
 --
 instantiate :: Monad f => (b -> f a) -> Abs b f a -> f a
 instantiate inst (Abs m) =
@@ -56,7 +55,7 @@ instantiate inst (Abs m) =
         Subterm a -> a
 
 -- |
--- Instantiate a single bound variable in an abstraction.
+-- Instantiate an abstraction with only one hole binder.
 --
 instantiate1 :: Monad f => f a -> Abs () f a -> f a
 instantiate1 a = instantiate (const a)
@@ -70,10 +69,7 @@ class AbsLike t where
     (>>>=) :: Monad f => t f a -> (a -> f c) -> t f c
 
 -- |
--- For points not bound by the abstraction, recursively apply a
--- substitution to their subterms using 'bindTerm'.
---
--- For bound points, do nothing.
+-- Apply a substitution to each unbound subterm of an abstraction.
 --
 bindAbsSubterms :: Monad f => Abs b f a -> (a -> f c) -> Abs b f c
 bindAbsSubterms (Abs m) s = Abs $ liftM (fmap (>>= s)) m
@@ -82,8 +78,8 @@ instance AbsLike (Abs b) where
     (>>>=) = bindAbsSubterms
 
 -- |
--- Substitution similar to 'bindAbsSubterms'. Substitutes points
--- with entire abstractions, rather than merely terms.
+-- Like 'bindAbsSubterms', but insert abstractions rather than concrete
+-- terms.
 --
 bindAbs :: Monad f => Abs b f a -> (a -> Abs b f c) -> Abs b f c
 bindAbs (Abs m) f = Abs $ do
