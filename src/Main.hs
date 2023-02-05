@@ -1,12 +1,12 @@
 
 module Main where
 
-import Giskard.Calculus
-import Giskard.Pretty
-import Giskard.Typechecking.Tc
-import Giskard.Typechecking.Common
+import Asimov.Calculus
+import Asimov.Pretty
+import Asimov.Typechecking.Tc
+import Asimov.Typechecking.Common
 -- import Giskard.Typechecking.STLC
-import Giskard.Typechecking.SystemF
+import Asimov.Typechecking.SystemF
 
 import Control.Lens
 import Control.Monad.State.Lazy

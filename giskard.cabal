@@ -42,17 +42,17 @@ Library
   HS-Source-Dirs:     src
 
   Exposed-modules:    Main
-                      Giskard.Calculus
-                      Giskard.Calculus.Abstractions
-                      Giskard.Calculus.ProtoTerm
-                      Giskard.Calculus.SyntacticEq
+                      Asimov.Calculus
+                      Asimov.Calculus.Abstractions
+                      Asimov.Calculus.ProtoTerm
+                      Asimov.Calculus.SyntacticEq
                       -- Giskard.Calculus.Match
-                      Giskard.Names
-                      Giskard.Pretty
-                      Giskard.Typechecking.Tc
-                      Giskard.Typechecking.Common
+                      Asimov.Names
+                      Asimov.Pretty
+                      Asimov.Typechecking.Tc
+                      Asimov.Typechecking.Common
                       -- Giskard.Typechecking.STLC
-                      Giskard.Typechecking.SystemF
+                      Asimov.Typechecking.SystemF
                       -- Giskard.Telepath.Types
                       -- Giskard.Telepath.Graph
                       -- Giskard.Telepath.Ops

@@ -1,11 +1,11 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Pretty
+-- Module       : Asimov.Pretty
 -- Description  : Simple Prettyprinter Class
 -----------------------------------------------------------
 
-module Giskard.Pretty
+module Asimov.Pretty
     ( Pretty (..)
     ) where
 

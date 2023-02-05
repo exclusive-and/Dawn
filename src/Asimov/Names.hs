@@ -1,5 +1,5 @@
 
-module Giskard.Names where
+module Asimov.Names where
 
 type Name = Int
 

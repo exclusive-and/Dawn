@@ -1,10 +1,10 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.Abstractions
+-- Module       : Asimov.Calculus.Abstractions
 -- Description  : Common Abstraction Implementation
 -----------------------------------------------------------
-module Giskard.Calculus.Abstractions
+module Asimov.Calculus.Abstractions
     ( Abs (..), Point (..)
     , abstract, abstract1
     , instantiate, instantiate1

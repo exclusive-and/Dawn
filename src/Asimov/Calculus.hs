@@ -1,13 +1,13 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus
+-- Module       : Asimov.Calculus
 -- Description  : Common Typed Lambda Calculus Implementation
 -----------------------------------------------------------
-module Giskard.Calculus
+module Asimov.Calculus
     ( module X
     ) where
 
-import Giskard.Calculus.Abstractions as X
-import Giskard.Calculus.ProtoTerm as X
-import Giskard.Calculus.SyntacticEq as X
+import Asimov.Calculus.Abstractions as X
+import Asimov.Calculus.ProtoTerm as X
+import Asimov.Calculus.SyntacticEq as X

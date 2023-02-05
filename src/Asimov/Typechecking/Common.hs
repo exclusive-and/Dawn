@@ -1,15 +1,15 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Typechecking.Common
+-- Module       : Asimov.Typechecking.Common
 -- Description  : Common Typechecking Functionality
 -----------------------------------------------------------
-module Giskard.Typechecking.Common where
+module Asimov.Typechecking.Common where
 
-import              Giskard.Calculus
-import              Giskard.Names
-import              Giskard.Pretty
-import              Giskard.Typechecking.Tc
+import              Asimov.Calculus
+import              Asimov.Names
+import              Asimov.Pretty
+import              Asimov.Typechecking.Tc
 
 import              Control.Monad (zipWithM_)
 import              Data.Set (Set)

@@ -3,13 +3,13 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Typechecking.Tc
+-- Module       : Asimov.Typechecking.Tc
 -- Description  : Some Reusable Type-checker Types and Classes
 -----------------------------------------------------------
-module Giskard.Typechecking.Tc
+module Asimov.Typechecking.Tc
     ( TcTerm, TcType
-    , TcPoint (..)
-    , TcMonad (..)
+    , TcPoint
+    , TcMonad
     , Typechecker (..), TcGoal (..)
     , TcHasTrace (..)
     , TcException (..)
@@ -21,9 +21,9 @@ module Giskard.Typechecking.Tc
     , ContextVar, Context
     ) where
 
-import              Giskard.Calculus
-import              Giskard.Names
-import              Giskard.Pretty
+import              Asimov.Calculus
+import              Asimov.Names
+import              Asimov.Pretty
 
 import qualified    Data.Kind as Kind
 import              Data.Map (Map)

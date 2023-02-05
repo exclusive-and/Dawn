@@ -1,10 +1,10 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.ProtoTerm
--- Description  : Calculus Prototypical Term Syntax
+-- Module       : Asimov.Calculus.ProtoTerm
+-- Description  : Prototypical Term Syntax of the Lambda Cube
 -----------------------------------------------------------
-module Giskard.Calculus.ProtoTerm
+module Asimov.Calculus.ProtoTerm
     ( ProtoTerm (..), ProtoType
     , ProtoBind (..)
     , bindTerm
@@ -13,8 +13,8 @@ module Giskard.Calculus.ProtoTerm
     , stripApps
     ) where
 
-import Giskard.Calculus.Abstractions
-import Giskard.Pretty
+import Asimov.Calculus.Abstractions
+import Asimov.Pretty
 
 import Control.Monad (ap)
 import Data.Text (Text, intercalate)

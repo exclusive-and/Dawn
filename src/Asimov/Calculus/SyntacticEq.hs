@@ -1,17 +1,17 @@
 
 -----------------------------------------------------------
 -- |
--- Module       : Giskard.Calculus.SyntacticEq
--- Description  : Syntactic Equality of Terms
+-- Module       : Asimov.Calculus.SyntacticEq
+-- Description  : Syntactic Equality of Proto-Terms
 -----------------------------------------------------------
-module Giskard.Calculus.SyntacticEq
+module Asimov.Calculus.SyntacticEq
     ( SynEq (..)
     , synEqTerms
     , synEqAbs, synEqPoints
     ) where
 
-import Giskard.Calculus.Abstractions
-import Giskard.Calculus.ProtoTerm
+import Asimov.Calculus.Abstractions
+import Asimov.Calculus.ProtoTerm
 
 
 -- |
