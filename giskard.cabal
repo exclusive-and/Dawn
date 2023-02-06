@@ -88,7 +88,3 @@ Library
                       transformers            >= 0.5.2.0  && < 0.7,
                       unordered-containers    >= 0.2.3.3  && < 0.3
 
-  -- extra-libraries:    blas lapack
-
-  extra-lib-dirs:     /home/xand/.nix-profile/lib/
-
